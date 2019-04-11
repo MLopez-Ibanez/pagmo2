@@ -8,7 +8,7 @@ described as *evolving* a population. In the scientific literature, an interesti
 discussion has developed over the past decades on whether evolution is or not a form of
 optimization. In pygmo we take the opposite standpoint and we regard optimization,
 of all types, as a form of evolution. Regardless on whether you will be using an SQP,
-an interior point optimizer or an evolutionary startegy solver, in pygmo you will
+an interior point optimizer or an evolutionary strategy solver, in pygmo you will
 always have to call a method called ``evolve()`` to improve over your initial solutions,
 i.e. your *population*.
 
