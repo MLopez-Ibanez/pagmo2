@@ -61,17 +61,19 @@ see https://www.gnu.org/licenses/. */
 #include <pagmo/problems/ackley.hpp>
 #include <pagmo/problems/cec2006.hpp>
 #include <pagmo/problems/cec2009.hpp>
-#if defined(PAGMO_ENABLE_CEC2014)
-#include <pagmo/problems/cec2014.hpp>
-#endif
 #include <pagmo/problems/decompose.hpp>
 #include <pagmo/problems/dtlz.hpp>
 #include <pagmo/problems/griewank.hpp>
 #include <pagmo/problems/hock_schittkowsky_71.hpp>
 #include <pagmo/problems/inventory.hpp>
 #include <pagmo/problems/lennard_jones.hpp>
+#include <pagmo/problems/null_problem.hpp>
 #include <pagmo/threading.hpp>
 #include <pagmo/types.hpp>
+
+#if defined(PAGMO_ENABLE_CEC2014)
+#include <pagmo/problems/cec2014.hpp>
+#endif
 
 #include <pygmo/common_utils.hpp>
 #include <pygmo/docstrings.hpp>
@@ -148,19 +150,23 @@ void expose_problems_0()
                                                            "See :cpp:class:`pagmo::hock_schittkowsky_71`.\n\n");
     hs71.def("best_known", &best_known_wrapper<hock_schittkowsky_71>,
              problem_get_best_docstring("Hock-Schittkowsky 71").c_str());
+
     // Ackley.
     auto ack = expose_problem_pygmo<ackley>("ackley", "__init__(dim = 1)\n\nThe Ackley problem.\n\n"
                                                       "See :cpp:class:`pagmo::ackley`.\n\n");
     ack.def(bp::init<unsigned>((bp::arg("dim"))));
     ack.def("best_known", &best_known_wrapper<ackley>, problem_get_best_docstring("Ackley").c_str());
+
     // Griewank.
     auto griew = expose_problem_pygmo<griewank>("griewank", "__init__(dim = 1)\n\nThe Griewank problem.\n\n"
                                                             "See :cpp:class:`pagmo::griewank`.\n\n");
     griew.def(bp::init<unsigned>((bp::arg("dim"))));
     griew.def("best_known", &best_known_wrapper<griewank>, problem_get_best_docstring("Griewank").c_str());
+
     // Lennard Jones
-    auto lj = expose_problem_pygmo<lennard_jones>("lennard_jones", "__init__(atoms = 3)\n\nThe Lennard Jones Cluster problem.\n\n"
-                                                                   "See :cpp:class:`pagmo::lennard_jones`.\n\n");
+    auto lj = expose_problem_pygmo<lennard_jones>("lennard_jones",
+                                                  "__init__(atoms = 3)\n\nThe Lennard Jones Cluster problem.\n\n"
+                                                  "See :cpp:class:`pagmo::lennard_jones`.\n\n");
     lj.def(bp::init<unsigned>((bp::arg("atoms") = 3u)));
     // DTLZ.
     auto dtlz_p = expose_problem_pygmo<dtlz>("dtlz", dtlz_docstring().c_str());

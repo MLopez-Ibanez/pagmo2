@@ -16,6 +16,7 @@ we suggest to follow the tutorials / examples.
   population
   island
   archipelago
+  bfe
 
 Implemented algorithms
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -29,6 +30,8 @@ Implemented algorithms
   algorithms/compass_search
   algorithms/de
   algorithms/de1220
+  algorithms/gaco
+  algorithms/gwo
   algorithms/ihs
   algorithms/ipopt
   algorithms/moead
@@ -72,6 +75,7 @@ Implemented problems
   problems/cec2013
   problems/cec2014
   problems/unconstrain
+  problems/wfg
 
 Implemented islands
 ^^^^^^^^^^^^^^^^^^^
@@ -81,6 +85,16 @@ Implemented islands
 
   islands/thread_island
   islands/fork_island
+
+Implemented batch evaluators
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. toctree::
+  :maxdepth: 1
+
+  batch_evaluators/default_bfe
+  batch_evaluators/thread_bfe
+  batch_evaluators/member_bfe
 
 Utilities
 ^^^^^^^^^

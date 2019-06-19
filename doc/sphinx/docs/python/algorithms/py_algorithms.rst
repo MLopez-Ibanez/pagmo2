@@ -13,6 +13,16 @@ Algorithms exposed from C++
 
 -------------------------------------------------------------
 
+.. autoclass:: pygmo.gaco
+   :members:
+
+-------------------------------------------------------------
+
+.. autoclass:: pygmo.gwo
+   :members:
+
+-------------------------------------------------------------
+
 .. autoclass:: pygmo.bee_colony
    :members:
 

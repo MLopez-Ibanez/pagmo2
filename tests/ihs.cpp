@@ -26,10 +26,11 @@ You should have received copies of the GNU General Public License and the
 GNU Lesser General Public License along with the PaGMO library.  If not,
 see https://www.gnu.org/licenses/. */
 
-#define BOOST_TEST_MODULE ihs_problem_test
-#include <boost/lexical_cast.hpp>
-#include <boost/test/included/unit_test.hpp>
+#define BOOST_TEST_MODULE ihs_test
+#define BOOST_TEST_DYN_LINK
+#include <boost/test/unit_test.hpp>
 
+#include <boost/lexical_cast.hpp>
 #include <pagmo/algorithm.hpp>
 #include <pagmo/algorithms/ihs.hpp>
 #include <pagmo/io.hpp>
@@ -37,6 +38,7 @@ see https://www.gnu.org/licenses/. */
 #include <pagmo/problems/hock_schittkowsky_71.hpp>
 #include <pagmo/problems/inventory.hpp>
 #include <pagmo/problems/minlp_rastrigin.hpp>
+#include <pagmo/problems/null_problem.hpp>
 #include <pagmo/problems/rosenbrock.hpp>
 #include <pagmo/problems/zdt.hpp>
 
@@ -157,19 +159,19 @@ BOOST_AUTO_TEST_CASE(ihs_serialization_test)
     auto before_log = algo.extract<ihs>()->get_log();
     // Now serialize, deserialize and compare the result.
     {
-        cereal::JSONOutputArchive oarchive(ss);
-        oarchive(algo);
+        boost::archive::binary_oarchive oarchive(ss);
+        oarchive << algo;
     }
     // Change the content of p before deserializing.
-    algo = algorithm{null_algorithm{}};
+    algo = algorithm{};
     {
-        cereal::JSONInputArchive iarchive(ss);
-        iarchive(algo);
+        boost::archive::binary_iarchive iarchive(ss);
+        iarchive >> algo;
     }
     auto after_text = boost::lexical_cast<std::string>(algo);
     auto after_log = algo.extract<ihs>()->get_log();
     BOOST_CHECK_EQUAL(before_text, after_text);
-    // BOOST_CHECK(before_log == after_log); // This fails because of floating point problems when using JSON and cereal
+    BOOST_CHECK(before_log == after_log);
     // so we implement a close check
     BOOST_CHECK(before_log.size() > 0u);
     for (auto i = 0u; i < before_log.size(); ++i) {
@@ -187,7 +189,7 @@ BOOST_AUTO_TEST_CASE(ihs_serialization_test)
 BOOST_AUTO_TEST_CASE(ihs_integer_test)
 {
     // We test that on integer problems the evolution returns integer results.
-    minlp_rastrigin udp(0u, 10u); 
+    minlp_rastrigin udp(0u, 10u);
     problem prob(udp);
     population pop(prob, 20u, 32u);
     ihs uda{10u, 0.99, 0.99, 0.99, 1e-5, 5, 42u};

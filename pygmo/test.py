@@ -424,6 +424,85 @@ class de_test_case(_ut.TestCase):
         log = uda.get_log()
 
 
+class nsga2_test_case(_ut.TestCase):
+    """Test case for the UDA nsga2
+
+    """
+
+    def runTest(self):
+        from .core import nsga2, algorithm
+        from pickle import loads, dumps
+        uda = nsga2()
+        uda = nsga2(gen=10, cr=0.94, eta_c=9., m=0.05, eta_m=10., seed=0)
+        self.assertEqual(uda.get_seed(), 0)
+        a = algorithm(uda)
+        self.assertEqual(str(a), str(loads(dumps(a))))
+        log = uda.get_log()
+
+
+class gaco_test_case(_ut.TestCase):
+    """Test case for the UDA gaco
+
+    """
+
+    def runTest(self):
+        from .core import gaco, algorithm, bfe
+        from pickle import loads, dumps
+        uda = gaco()
+        uda = gaco(gen=1000, seed=5)
+        self.assertEqual(uda.get_seed(), 5)
+        a = algorithm(uda)
+        self.assertEqual(str(a), str(loads(dumps(a))))
+        log = uda.get_log()
+        uda.set_bfe(b = bfe())
+        uda.set_bfe(bfe())
+
+class gwo_test_case(_ut.TestCase):
+    """Test case for the UDA gwo
+
+    """
+
+    def runTest(self):
+        from .core import gwo, algorithm
+        from pickle import loads, dumps
+        uda = gwo()
+        uda = gwo(gen=1000, seed=5)
+        self.assertEqual(uda.get_seed(), 5)
+        a = algorithm(uda)
+        self.assertEqual(str(a), str(loads(dumps(a))))
+        log = uda.get_log()
+
+
+class de1220_test_case(_ut.TestCase):
+    """Test case for the UDA de1220
+
+    """
+
+    def runTest(self):
+        from .core import de1220, algorithm
+        from pickle import loads, dumps
+        uda = de1220()
+        uda = de1220(gen=1000, seed=5)
+        self.assertEqual(uda.get_seed(), 5)
+        a = algorithm(uda)
+        self.assertEqual(str(a), str(loads(dumps(a))))
+        log = uda.get_log()
+
+
+class sea_test_case(_ut.TestCase):
+    """Test case for the UDA sea
+
+    """
+
+    def runTest(self):
+        from .core import sea
+        uda = sea()
+        uda = sea(gen=10000)
+        uda = sea(gen=10000, seed=32)
+        self.assertEqual(uda.get_seed(), 32)
+        log = uda.get_log()
+
+
 class pso_gen_test_case(_ut.TestCase):
     """Test case for the UDA pso_gen
 
@@ -560,21 +639,6 @@ class sga_test_case(_ut.TestCase):
                   mutation="polynomial", selection="tournament")
         uda = sga(gen=1, cr=.90, eta_c=1., m=0.02, param_m=1., param_s=2, crossover="exponential",
                   mutation="polynomial", selection="tournament", seed=32)
-        self.assertEqual(uda.get_seed(), 32)
-        seed = uda.get_seed()
-
-
-class nsga2_test_case(_ut.TestCase):
-    """Test case for the UDA nsga2
-
-    """
-
-    def runTest(self):
-        from .core import nsga2
-        uda = nsga2()
-        uda = nsga2(gen=1, cr=0.95, eta_c=10, m=0.01, eta_m=10)
-        uda = nsga2(gen=1, cr=0.95, eta_c=10, m=0.01,
-                    eta_m=10, int_dim=0, seed=32)
         self.assertEqual(uda.get_seed(), 32)
         seed = uda.get_seed()
 
@@ -1014,6 +1078,35 @@ class minlp_rastrigin_test_case(_ut.TestCase):
         self.assertTrue(int(pop.get_x()[0][-3]) == pop.get_x()[0][-3])
         self.assertTrue(int(pop.get_x()[0][0]) != pop.get_x()[0][0])
         self.assertTrue(int(pop.get_x()[0][1]) != pop.get_x()[0][1])
+
+class wfg_test_case(_ut.TestCase):
+    """Test case for the UDP wfg
+        
+        """
+    
+    def runTest(self):
+        from .core import wfg, problem, population
+        udp = wfg(prob_id=1, dim_dvs=5, dim_obj=3, dim_k=4)
+        prob = problem(udp)
+        pop = population(udp, 20)
+        self.assertTrue(prob.get_nx() == 5)
+        self.assertTrue(prob.get_nobj() == 3)
+
+class rastrigin_test_case(_ut.TestCase):
+    """Test case for the Rastrigin function
+
+    """
+
+    def runTest(self):
+        from .core import rastrigin, problem, population
+        from pickle import loads, dumps
+        udp = rastrigin(dim=5)
+        prob = problem(udp)
+        self.assertTrue(prob.get_nx() == 5)
+        self.assertTrue(prob.get_nix() == 0)
+        self.assertTrue(prob.get_ncx() == 5)
+        pop = population(udp, 1)
+        self.assertEqual(str(pop), str(loads(dumps(pop))))
 
 
 class random_decision_vector_test_case(_ut.TestCase):
@@ -1672,7 +1765,17 @@ class archipelago_test_case(_ut.TestCase):
         self.run_status_tests()
         if self._level > 0:
             self.run_torture_test_0()
-            self.run_torture_test_1()
+            # NOTE: skip this test for the time being.
+            # It was copy-pasted from an interactive
+            # python session ages ago, and it's not clear
+            # whether we can control its internal randomness
+            # or not, with the result that it seems to
+            # fail rarely (in the sense that it won't
+            # raise an expected exception, not that it crashes
+            # or anything like that). We'll have to
+            # investigate further if we ever want to
+            # turn it back on.
+            # self.run_torture_test_1()
 
     def run_init_tests(self):
         from . import archipelago, de, rosenbrock, population, null_problem, thread_island, mp_island
@@ -1977,6 +2080,11 @@ def run_test_suite(level=0):
     suite.addTest(golomb_ruler_test_case())
     suite.addTest(lennard_jones_test_case())
     suite.addTest(de_test_case())
+    suite.addTest(nsga2_test_case())
+    suite.addTest(gaco_test_case())
+    suite.addTest(gwo_test_case())
+    suite.addTest(de1220_test_case())
+    suite.addTest(sea_test_case())
     suite.addTest(pso_test_case())
     suite.addTest(pso_gen_test_case())
     suite.addTest(bee_colony_test_case())
@@ -2013,12 +2121,14 @@ def run_test_suite(level=0):
     suite.addTest(cec2014_test_case())
     suite.addTest(luksan_vlcek1_test_case())
     suite.addTest(minlp_rastrigin_test_case())
+    suite.addTest(rastrigin_test_case())
     suite.addTest(translate_test_case())
     suite.addTest(decompose_test_case())
     suite.addTest(unconstrain_test_case())
     suite.addTest(mbh_test_case())
     suite.addTest(cstrs_self_adaptive_test_case())
     suite.addTest(decorator_problem_test_case())
+    suite.addTest(wfg_test_case())
     try:
         from .core import nlopt
         suite.addTest(nlopt_test_case())
