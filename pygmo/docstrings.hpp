@@ -54,6 +54,8 @@ std::string problem_docstring();
 std::string problem_get_best_docstring(const std::string &);
 std::string problem_fitness_docstring();
 std::string problem_get_bounds_docstring();
+std::string problem_batch_fitness_docstring();
+std::string problem_has_batch_fitness_docstring();
 std::string problem_get_lb_docstring();
 std::string problem_get_ub_docstring();
 std::string problem_get_nec_docstring();
@@ -116,6 +118,7 @@ std::string decompose_z_docstring();
 std::string unconstrain_docstring();
 std::string get_best_docstring(const std::string &);
 std::string generic_udp_inner_problem_docstring();
+std::string wfg_docstring();
 
 // user - algorithms
 std::string null_algorithm_docstring();
@@ -135,6 +138,11 @@ std::string moead_docstring();
 std::string moead_get_log_docstring();
 std::string nsga2_docstring();
 std::string nsga2_get_log_docstring();
+std::string gaco_set_bfe_docstring();
+std::string gaco_docstring();
+std::string gaco_get_log_docstring();
+std::string gwo_docstring();
+std::string gwo_get_log_docstring();
 std::string pso_docstring();
 std::string pso_get_log_docstring();
 std::string pso_gen_docstring();
@@ -260,6 +268,19 @@ std::string archipelago_wait_check_docstring();
 std::string archipelago_getitem_docstring();
 std::string archipelago_get_champions_f_docstring();
 std::string archipelago_get_champions_x_docstring();
+
+// bfe.
+std::string bfe_docstring();
+std::string bfe_call_docstring();
+std::string bfe_get_name_docstring();
+std::string bfe_get_extra_info_docstring();
+std::string bfe_get_thread_safety_docstring();
+
+// udbfe.
+std::string default_bfe_docstring();
+std::string thread_bfe_docstring();
+std::string member_bfe_docstring();
+
 } // namespace pygmo
 
 #endif

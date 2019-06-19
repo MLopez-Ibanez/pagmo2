@@ -7,23 +7,56 @@ Changelog
 New
 ~~~
 
+- Various additions to the C++ API of user-defined classes
+  (`#294 <https://github.com/esa/pagmo2/pull/294>`__).
+
+- Ipopt is now included in the linux pip packages (`#293 <https://github.com/esa/pagmo2/pull/293>`__).
+
+- Implement an ``uninstall`` target in the build system when using the CMake
+  ``Unix Makefiles`` generator (`#282 <https://github.com/esa/pagmo2/pull/282>`__).
+
+- Implement the Grey Wolf Optimizer algorithm (`#268 <https://github.com/esa/pagmo2/pull/268>`__).
+
+- Add CircleCI to the continuous integration pipeline (`#266 <https://github.com/esa/pagmo2/pull/266>`__).
+
+- Implement the Extended Ant Colony Optimization algorithm (`#249 <https://github.com/esa/pagmo2/pull/249>`__).
+
 - Implement the Lennard-Jones and Golomb ruler problems (`#247 <https://github.com/esa/pagmo2/pull/247>`__).
 
 Changes
 ~~~~~~~
 
+- Various improvements to the MinGW pip packages: the toolchain
+  and the dependencies have
+  been updated, support for Python 3.7 has been added (`#292 <https://github.com/esa/pagmo2/pull/292>`__).
+
+- **BREAKING**: unconditionally disable the CEC2013/CEC2014 problem suites on
+  OSX and MinGW, as they cause build
+  issues (`#266 <https://github.com/esa/pagmo2/pull/266>`__, `#292 <https://github.com/esa/pagmo2/pull/292>`__).
+
 - Various performance improvements in the :cpp:class:`~pagmo::population` API (`#250 <https://github.com/esa/pagmo2/pull/250>`__).
 
-- **BREAKING**: :class:`pygmo.problem` and :class:`pygmo.algorithm` cannot be used as UDPs and UDAs any more.
+- **BREAKING**: :class:`pygmo.problem` and :class:`pygmo.algorithm`
+  cannot be used as UDPs and UDAs any more.
   This change makes the behaviour of pygmo consistent with the behaviour of pagmo (`#248 <https://github.com/esa/pagmo2/pull/248>`__).
 
 Fix
 ~~~
 
+- Fix a build failure when pagmo is configured without Eigen3 (`#281 <https://github.com/esa/pagmo2/pull/281>`__).
+
+- Fix a build failure in the Ipopt algorithm wrapper when using the Debian/Ubuntu Ipopt packages (`#266 <https://github.com/esa/pagmo2/pull/266>`__).
+
+- Fix a few test suite build failures in debug mode when using recent Clang versions (`#266 <https://github.com/esa/pagmo2/pull/266>`__).
+
 - Fix the behaviour of NSGA2 and MOEAD when the problem has equal lower/upper bounds (`#244 <https://github.com/esa/pagmo2/pull/244>`__).
 
 - Various documentation, build system and unit testing fixes/improvements (`#243 <https://github.com/esa/pagmo2/pull/243>`__,
-  `#245 <https://github.com/esa/pagmo2/pull/245>`__, `#248 <https://github.com/esa/pagmo2/pull/248>`__).
+  `#245 <https://github.com/esa/pagmo2/pull/245>`__, `#248 <https://github.com/esa/pagmo2/pull/248>`__,
+  `#257 <https://github.com/esa/pagmo2/pull/257>`__, `#262 <https://github.com/esa/pagmo2/pull/262>`__,
+  `#265 <https://github.com/esa/pagmo2/pull/265>`__, `#266 <https://github.com/esa/pagmo2/pull/266>`__,
+  `#279 <https://github.com/esa/pagmo2/pull/279>`__, `#287 <https://github.com/esa/pagmo2/pull/287>`__,
+  `#288 <https://github.com/esa/pagmo2/pull/288>`__).
 
 - The :cpp:class:`~pagmo::fork_island` UDI now properly cleans up zombie processes (`#242 <https://github.com/esa/pagmo2/pull/242>`__).
 
