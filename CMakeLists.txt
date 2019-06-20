@@ -189,6 +189,7 @@ if(PAGMO_BUILD_PAGMO)
         "${CMAKE_CURRENT_SOURCE_DIR}/src/problems/luksan_vlcek1.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/problems/wfg.cpp"
         # UDA.
+        # FIXME: Why not use FILE(GLOB) ?
         "${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms/null_algorithm.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms/de.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms/pso.cpp"
@@ -205,6 +206,7 @@ if(PAGMO_BUILD_PAGMO)
         "${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms/simulated_annealing.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms/moead.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms/nsga2.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms/bcemoa.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms/gaco.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms/de1220.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms/gwo.cpp"
@@ -364,7 +366,8 @@ endif()
 # Library installation.
 if(PAGMO_BUILD_PAGMO)
     # Installation of the header files.
-    install(DIRECTORY include/ DESTINATION include)
+    install(DIRECTORY include/ DESTINATION include
+       PATTERN "*~" EXCLUDE)
     install(FILES "${CMAKE_CURRENT_BINARY_DIR}/include/pagmo/config.hpp" DESTINATION include/pagmo)
 
     # Installation of the library.
