@@ -57,11 +57,14 @@ public:
      * @throws std::invalid_argument if \p cr is not \f$ \in [0,1[\f$, \p m is not \f$ \in [0,1]\f$, \p eta_c is not in
      * [1,100[ or \p eta_m is not in [1,100[.
      */
-    bcemoa(unsigned gen = 1u, double cr = 0.95, double eta_c = 10., double m = 0.01, double eta_m = 50.,
+     unsigned int geni;
+    bcemoa(unsigned gen1 = 1u, unsigned geni = 10u, double cr = 0.95, double eta_c = 10., double m = 0.01, double eta_m = 50.,
            unsigned seed = pagmo::random_device::next());
 
     // Algorithm evolve method
     population evolve(population) const;
+    //Algorithm evolve based on preference information
+    population evolvei(population) const;
 
     // FIXME: Report to pagmo that if we don't duplicate this, we get
     /* bcemoa.o: In function `pagmo::detail::algo_inner<pagmo::bcemoa>::set_seed(unsigned int)':
