@@ -57,7 +57,6 @@ public:
      * @throws std::invalid_argument if \p cr is not \f$ \in [0,1[\f$, \p m is not \f$ \in [0,1]\f$, \p eta_c is not in
      * [1,100[ or \p eta_m is not in [1,100[.
      */
-     unsigned int geni;
     bcemoa(unsigned gen1 = 1u, unsigned geni = 10u, double cr = 0.95, double eta_c = 10., double m = 0.01, double eta_m = 50.,
            unsigned seed = pagmo::random_device::next());
 
@@ -91,6 +90,7 @@ bcemoa.cpp:(.text._ZN5pagmo6detail10algo_innerINS_6bcemoaEE8set_seedEj[_ZN5pagmo
 
 private:
 
+    unsigned int geni;
 };
 
 } // namespace pagmo
