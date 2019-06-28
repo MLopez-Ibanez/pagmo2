@@ -41,6 +41,17 @@ double linear_value_function::value(const std::vector<double> & obj) const
     }
     return value;
 }
+double quadratic_value_function::value(const std::vector<double> & obj) const
+{
+double value = 0.;
+for(auto const& i : boost::combine(this->weights, this->ideal_point, obj)) {
+    double w, ip, o;
+    boost::tie(w, ip, o) = i;
+    value += pow(w * (o-ip),2);
+}
+return value;
+
+}
 
 vector_double
 machineDM::fitness(const vector_double & solution) const
@@ -71,7 +82,7 @@ machineDM::rank(const pagmo::population &pop) const
     std::vector<size_t> ranks;
     // FIXME
     return ranks;
-} 
+}
 
 /// Object serialization
 /**

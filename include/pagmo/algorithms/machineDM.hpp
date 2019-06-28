@@ -18,10 +18,11 @@ public:
 
     virtual double value(const std::vector<double> &) const = 0;
     std::vector<double> weights;
+    std::vector<double> ideal_point;
 
 protected:
-    value_function(std::vector<double> w)
-        : weights(w)
+    value_function(std::vector<double> w,std::vector<double> ip={0,0})
+        : weights(w),ideal_point(ip)
     {};
 };
 
@@ -34,7 +35,14 @@ public:
     {};
     double value(const std::vector<double> &) const;
 };
-
+class PAGMO_DLL_PUBLIC quadratic_value_function : public value_function
+{
+public:
+quadratic_value_function ( std::vector<double> w, std::vector<double> ip)
+        : value_function(w,ip)
+{};
+double value(const std::vector<double> &) const;
+};
 /// Machine Decision Maker
 /**
  * FIXME: DOCUMENT ME !
@@ -86,7 +94,7 @@ public:
     template <typename Archive> void serialize(Archive &ar, unsigned);
 
     value_function & pref;
-    problem &prob;    
+    problem &prob;
 };
 
 } // namespace pagmo

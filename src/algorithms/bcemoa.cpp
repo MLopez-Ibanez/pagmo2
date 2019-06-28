@@ -54,7 +54,7 @@ namespace pagmo
 {
 
 bcemoa::bcemoa(unsigned gen1, unsigned geni, double cr, double eta_c, double m, double eta_m, unsigned seed)
-    : nsga2(gen1, cr, eta_c, m, eta_m, seed), geni(geni)
+    : nsga2(gen1, cr, eta_c, m, eta_m, seed)
 {
   if (cr >= 1. || cr < 0.) {
       pagmo_throw(std::invalid_argument, "The crossover probability must be in the [0,1[ range, while a value of "
@@ -90,10 +90,8 @@ bcemoa::bcemoa(unsigned gen1, unsigned geni, double cr, double eta_c, double m, 
 population bcemoa::evolve(population pop) const
 {
     // Call evolve from parent class
-    pop = nsga2::evolve(pop);
-    return evolvei(pop);
+    return nsga2::evolve(pop);
 }
-
 population bcemoa::evolvei(population pop) const
    {
        // We store some useful variables
