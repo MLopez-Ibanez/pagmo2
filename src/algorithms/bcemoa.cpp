@@ -235,6 +235,7 @@ population bcemoa::evolvei(population pop) const
 
            // This method returns the sorted N best individuals in the population according to the crowded comparison
            // operator
+           //shouldn't we sort individuals based on preference function???
            best_idx = select_best_N_mo(popnew.get_f(), NP);
            // We insert into the population
            for (population::size_type i = 0; i < NP; ++i) {

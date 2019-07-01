@@ -39,7 +39,7 @@ class PAGMO_DLL_PUBLIC quadratic_value_function : public value_function
 {
 public:
 quadratic_value_function ( std::vector<double> w, std::vector<double> ip)
-        : value_function(w,ip)
+        : value_function(w,ip)//maybe we can delete the ip(idealpoint) from the input, get it in the constructor by pgamo::ideal(get_f)
 {};
 double value(const std::vector<double> &) const;
 };
