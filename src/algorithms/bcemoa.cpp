@@ -56,24 +56,6 @@ namespace pagmo
 bcemoa::bcemoa(unsigned gen1, unsigned geni, double cr, double eta_c, double m, double eta_m, unsigned seed)
     : nsga2(gen1, cr, eta_c, m, eta_m, seed), m_geni(geni)
 {
-  if (cr >= 1. || cr < 0.) {
-      pagmo_throw(std::invalid_argument, "The crossover probability must be in the [0,1[ range, while a value of "
-                                             + std::to_string(cr) + " was detected");
-  }
-  if (m < 0. || m > 1.) {
-      pagmo_throw(std::invalid_argument, "The mutation probability must be in the [0,1] range, while a value of "
-                                             + std::to_string(cr) + " was detected");
-  }
-  if (eta_c < 1. || eta_c > 100.) {
-      pagmo_throw(std::invalid_argument,
-                  "The distribution index for crossover must be in [1, 100], while a value of "
-                      + std::to_string(eta_c) + " was detected");
-  }
-  if (eta_m < 1. || eta_m > 100.) {
-      pagmo_throw(std::invalid_argument,
-                  "The distribution index for mutation must be in [1, 100], while a value of "
-                      + std::to_string(eta_m) + " was detected");
-                    }
 }
 
 /// Algorithm evolve method
