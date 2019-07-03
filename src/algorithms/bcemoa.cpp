@@ -72,22 +72,37 @@ bcemoa::bcemoa(unsigned gen1, unsigned geni, double cr, double eta_c, double m, 
 population bcemoa::evolve(population pop) const
 {
     // Call evolve from parent class (NSGA-II) for gen1
-    pop = nsga2::evolve(pop);
+    return nsga2::evolve(pop);
     // Call interactive evolve of BCEMOA for geni
-    return evolvei(pop);
+    //return evolvei(pop);
 }
 
-population bcemoa::evolvei(population pop) const
+population bcemoa::evolvedm(machineDM &dm, population pop)
+{
+    // Call evolve from parent class (NSGA-II) for gen1
+    pop = nsga2::evolve(pop);
+    // Call interactive evolve of BCEMOA for geni
+    //    while(it <= maxit && res < threshold) {
+        pop = evolvei(dm, pop);
+        //}
+    return pop;
+}
+
+population bcemoa::evolvei(machineDM &dm, population pop)
    {
        // We store some useful variables
        const auto &prob = pop.get_problem(); // This is a const reference, so using set_seed for example will not be
                                              // allowed
        auto dim = prob.get_nx();             // This getter does not return a const reference but a copy
        auto NP = pop.size();
+       auto nobj = prob.get_nobj();
 
        auto fevals0 = prob.get_fevals(); // discount for the fevals already made
        unsigned int count = 1u;          // regulates the screen output
 
+       vector_double w(nobj, 1.0 / nobj);
+       linear_value_function bcemoa_vf{w};
+            
        // PREAMBLE-------------------------------------------------------------------------------------------------
        // We start by checking that the problem is suitable for this
        // particular algorithm.
@@ -176,15 +191,13 @@ population bcemoa::evolvei(population pop) const
            vector_double pop_cd(NP);         // We use preference instead of crowding distances of the whole population
            auto ndr = std::get<3>(fnds_res); // non domination rank [0,1,0,0,2,1,1, ... ]
            vector_double v;
-     for (const auto &front_idxs : ndf) {
+           for (const auto &front_idxs : ndf) {
                std::vector<vector_double> front;
                for (auto idx : front_idxs) {
-
+                   
                    v=pop.get_f()[idx];
                    //pop_cd[idx] = accumulate(v.begin(), v.end(), 0.0) / v.size();
-                   vector_double w(v.size(), 1.0 / v.size());
-                   linear_value_function vf{w};
-                   pop_cd[idx] =   vf.value(v);//linear_value_function::value(v);//dm.linear_utility(v, w, ideal_point)
+                   pop_cd[idx] =   bcemoa_vf.value(v);//linear_value_function::value(v);//dm.linear_utility(v, w, ideal_point)
                }
            }
 
