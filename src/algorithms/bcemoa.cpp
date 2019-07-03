@@ -54,7 +54,7 @@ namespace pagmo
 {
 
 bcemoa::bcemoa(unsigned gen1, unsigned geni, double cr, double eta_c, double m, double eta_m, unsigned seed)
-    : nsga2(gen1, cr, eta_c, m, eta_m, seed)
+    : nsga2(gen1, cr, eta_c, m, eta_m, seed), m_geni(geni)
 {
   if (cr >= 1. || cr < 0.) {
       pagmo_throw(std::invalid_argument, "The crossover probability must be in the [0,1[ range, while a value of "
@@ -89,9 +89,12 @@ bcemoa::bcemoa(unsigned gen1, unsigned geni, double cr, double eta_c, double m, 
 
 population bcemoa::evolve(population pop) const
 {
-    // Call evolve from parent class
-    return nsga2::evolve(pop);
+    // Call evolve from parent class (NSGA-II) for gen1
+    pop = nsga2::evolve(pop);
+    // Call interactive evolve of BCEMOA for geni
+    return evolvei(pop);
 }
+
 population bcemoa::evolvei(population pop) const
    {
        // We store some useful variables
@@ -145,7 +148,7 @@ population bcemoa::evolvei(population pop) const
        std::iota(shuffle2.begin(), shuffle2.end(), 0u);
 
        // Main NSGA-II loop
-       for (decltype(m_gen) gen = 1u; gen <= geni; gen++) {
+       for (decltype(m_gen) gen = 1u; gen <= m_geni; gen++) {
            // 0 - Logs and prints (verbosity modes > 1: a line is added every m_verbosity generations)
            if (m_verbosity > 0u) {
                // Every m_verbosity generations print a log line

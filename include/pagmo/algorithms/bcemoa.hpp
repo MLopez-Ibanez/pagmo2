@@ -91,6 +91,7 @@ bcemoa.cpp:(.text._ZN5pagmo6detail10algo_innerINS_6bcemoaEE8set_seedEj[_ZN5pagmo
 
 private:
 
+    unsigned m_geni;
 };
 
 } // namespace pagmo
