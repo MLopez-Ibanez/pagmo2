@@ -43,16 +43,14 @@ double linear_value_function::value(const std::vector<double> & obj) const
 }
 double quadratic_value_function::value(const std::vector<double> & obj) const
 {
-double value = 0.;
-double w, ip, o;
-BOOST_FOREACH(boost::tie(w, ip, o) , boost::combine(this->weights, this->ideal_point, obj)) {
-    value += pow(w * (o-ip),2);
-}
-return value;
+    double value = 0.;
+    double w, ip, o;
+    BOOST_FOREACH(boost::tie(w, ip, o) , boost::combine(this->weights, this->ideal_point, obj)) {
+        value += pow(w * (o-ip),2);
+    }
+    return value;
 
 }
-
-
 
 vector_double
 machineDM::fitness(const vector_double & solution) const

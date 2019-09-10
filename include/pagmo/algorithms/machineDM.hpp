@@ -151,7 +151,6 @@ public:
 };
 
 
-
 class PAGMO_DLL_PUBLIC quadratic_value_function : public value_function
 {
 public:

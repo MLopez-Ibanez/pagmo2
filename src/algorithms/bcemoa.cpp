@@ -54,26 +54,8 @@ namespace pagmo
 {
 
 bcemoa::bcemoa(unsigned gen1, unsigned geni, double cr, double eta_c, double m, double eta_m, unsigned seed)
-    : nsga2(gen1, cr, eta_c, m, eta_m, seed)
+    : nsga2(gen1, cr, eta_c, m, eta_m, seed), m_geni(geni)
 {
-  if (cr >= 1. || cr < 0.) {
-      pagmo_throw(std::invalid_argument, "The crossover probability must be in the [0,1[ range, while a value of "
-                                             + std::to_string(cr) + " was detected");
-  }
-  if (m < 0. || m > 1.) {
-      pagmo_throw(std::invalid_argument, "The mutation probability must be in the [0,1] range, while a value of "
-                                             + std::to_string(cr) + " was detected");
-  }
-  if (eta_c < 1. || eta_c > 100.) {
-      pagmo_throw(std::invalid_argument,
-                  "The distribution index for crossover must be in [1, 100], while a value of "
-                      + std::to_string(eta_c) + " was detected");
-  }
-  if (eta_m < 1. || eta_m > 100.) {
-      pagmo_throw(std::invalid_argument,
-                  "The distribution index for mutation must be in [1, 100], while a value of "
-                      + std::to_string(eta_m) + " was detected");
-                    }
 }
 
 /// Algorithm evolve method
@@ -89,20 +71,38 @@ bcemoa::bcemoa(unsigned gen1, unsigned geni, double cr, double eta_c, double m, 
 
 population bcemoa::evolve(population pop) const
 {
-    // Call evolve from parent class
+    // Call evolve from parent class (NSGA-II) for gen1
     return nsga2::evolve(pop);
+    // Call interactive evolve of BCEMOA for geni
+    //return evolvei(pop);
 }
-population bcemoa::evolvei(population pop) const
+
+population bcemoa::evolvedm(machineDM &dm, population pop)
+{
+    // Call evolve from parent class (NSGA-II) for gen1
+    pop = nsga2::evolve(pop);
+    // Call interactive evolve of BCEMOA for geni
+    //    while(it <= maxit && res < threshold) {
+        pop = evolvei(dm, pop);
+        //}
+    return pop;
+}
+
+population bcemoa::evolvei(machineDM &dm, population pop)
    {
        // We store some useful variables
        const auto &prob = pop.get_problem(); // This is a const reference, so using set_seed for example will not be
                                              // allowed
        auto dim = prob.get_nx();             // This getter does not return a const reference but a copy
        auto NP = pop.size();
+       auto nobj = prob.get_nobj();
 
        auto fevals0 = prob.get_fevals(); // discount for the fevals already made
        unsigned int count = 1u;          // regulates the screen output
 
+       vector_double w(nobj, 1.0 / nobj);
+       linear_value_function bcemoa_vf{w};
+            
        // PREAMBLE-------------------------------------------------------------------------------------------------
        // We start by checking that the problem is suitable for this
        // particular algorithm.
@@ -145,7 +145,7 @@ population bcemoa::evolvei(population pop) const
        std::iota(shuffle2.begin(), shuffle2.end(), 0u);
 
        // Main NSGA-II loop
-       for (decltype(m_gen) gen = 1u; gen <= geni; gen++) {
+       for (decltype(m_gen) gen = 1u; gen <= m_geni; gen++) {
            // 0 - Logs and prints (verbosity modes > 1: a line is added every m_verbosity generations)
            if (m_verbosity > 0u) {
                // Every m_verbosity generations print a log line
@@ -191,15 +191,13 @@ population bcemoa::evolvei(population pop) const
            vector_double pop_cd(NP);         // We use preference instead of crowding distances of the whole population
            auto ndr = std::get<3>(fnds_res); // non domination rank [0,1,0,0,2,1,1, ... ]
            vector_double v;
-     for (const auto &front_idxs : ndf) {
+           for (const auto &front_idxs : ndf) {
                std::vector<vector_double> front;
                for (auto idx : front_idxs) {
-
+                   
                    v=pop.get_f()[idx];
                    //pop_cd[idx] = accumulate(v.begin(), v.end(), 0.0) / v.size();
-                   vector_double w(v.size(), 1.0 / v.size());
-                   linear_value_function vf{w};
-                   pop_cd[idx] =   vf.value(v);//linear_value_function::value(v);//dm.linear_utility(v, w, ideal_point)
+                   pop_cd[idx] =   bcemoa_vf.value(v);//linear_value_function::value(v);//dm.linear_utility(v, w, ideal_point)
                }
            }
 
@@ -235,6 +233,8 @@ population bcemoa::evolvei(population pop) const
 
            // This method returns the sorted N best individuals in the population according to the crowded comparison
            // operator
+
+           // MANUEL: shouldn't we sort individuals based on preference function???
            best_idx = select_best_N_mo(popnew.get_f(), NP);
            // We insert into the population
            for (population::size_type i = 0; i < NP; ++i) {

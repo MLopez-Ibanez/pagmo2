@@ -161,11 +161,21 @@ public:
         return m_log;
     }
 
-    // Object serialization
+    /// Object serialization
+/**
+ * This method will save/load \p this into the archive \p ar.
+ *
+ * @param ar target archive.
+ *
+ * @throws unspecified any exception thrown by the serialization of the UDP and of primitive types.
+ */
     template <typename Archive>
-    void serialize(Archive &, unsigned);
-
-private:
+    void serialize(Archive &ar, unsigned)
+    {
+        detail::archive(ar, m_gen, m_cr, m_eta_c, m_m, m_eta_m, m_e, m_seed, m_verbosity, m_log);
+    };
+    
+protected:
     PAGMO_DLL_LOCAL vector_double::size_type
     tournament_selection(vector_double::size_type idx1, vector_double::size_type idx2,
                          const std::vector<vector_double::size_type> &non_domination_rank,

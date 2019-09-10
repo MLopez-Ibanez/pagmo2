@@ -269,19 +269,6 @@ std::string nsga2::get_extra_info() const
     return ss.str();
 }
 
-/// Object serialization
-/**
- * This method will save/load \p this into the archive \p ar.
- *
- * @param ar target archive.
- *
- * @throws unspecified any exception thrown by the serialization of the UDP and of primitive types.
- */
-template <typename Archive>
-void nsga2::serialize(Archive &ar, unsigned)
-{
-    detail::archive(ar, m_gen, m_cr, m_eta_c, m_m, m_eta_m, m_e, m_seed, m_verbosity, m_log);
-}
 
 vector_double::size_type nsga2::tournament_selection(vector_double::size_type idx1, vector_double::size_type idx2,
                                                      const std::vector<vector_double::size_type> &non_domination_rank,
