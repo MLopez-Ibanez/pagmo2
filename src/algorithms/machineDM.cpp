@@ -12,6 +12,7 @@
 #include <vector>
 
 #include <boost/range/combine.hpp>
+#include <boost/foreach.hpp>
 
 #include <pagmo/algorithm.hpp>
 #include <pagmo/algorithms/machineDM.hpp>
@@ -34,13 +35,24 @@ double linear_value_function::value(const std::vector<double> & obj) const
          std::cout << '(' << ti << ',' << tv << ')' << '\n';
          }
     */
-    for(auto const& i : boost::combine(this->weights, obj)) {
-        double w, o;
-        boost::tie(w,o) = i;
+    double w, o;
+    BOOST_FOREACH(boost::tie(w,o), boost::combine(this->weights, obj)) {
         value += w * o;
     }
     return value;
 }
+double quadratic_value_function::value(const std::vector<double> & obj) const
+{
+double value = 0.;
+double w, ip, o;
+BOOST_FOREACH(boost::tie(w, ip, o) , boost::combine(this->weights, this->ideal_point, obj)) {
+    value += pow(w * (o-ip),2);
+}
+return value;
+
+}
+
+
 
 vector_double
 machineDM::fitness(const vector_double & solution) const
@@ -71,7 +83,7 @@ machineDM::rank(const pagmo::population &pop) const
     std::vector<size_t> ranks;
     // FIXME
     return ranks;
-} 
+}
 
 /// Object serialization
 /**

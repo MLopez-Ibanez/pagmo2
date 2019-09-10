@@ -13,7 +13,7 @@ int main()
 	std::string str;
 	int obfs;
 	std::cout << "      Enter a polynomial without like terms\n";
-	std::cout << "(use the letter x. for ex.: -x+4.5x^3+2x^4-3.1)\n";
+	std::cout << "(use the letter x. for ex.: -x1^4+x2X3^4)\n";
 	std::cout << "\nEnter: ";
 	std::cin >> str;
 	if(str == "") return 1;
