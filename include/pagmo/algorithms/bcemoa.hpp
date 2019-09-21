@@ -33,8 +33,8 @@ see https://www.gnu.org/licenses/. */
 #include <tuple>
 #include <vector>
 
-#include <pagmo/algorithms/nsga2.hpp>
 #include <pagmo/algorithms/machineDM.hpp>
+#include <pagmo/algorithms/nsga2.hpp>
 
 namespace pagmo
 {
@@ -65,7 +65,7 @@ public:
     // Algorithm evolve method
     population evolve(population) const;
 
-    population evolvedm(machineDM &dm, population);
+    // population evolvedm(machineDM &dm, population);
     //Algorithm evolve based on preference information
     population evolvei(machineDM &dm, population);
 

@@ -74,175 +74,178 @@ population bcemoa::evolve(population pop) const
     // Call evolve from parent class (NSGA-II) for gen1
     return nsga2::evolve(pop);
     // Call interactive evolve of BCEMOA for geni
-    //return evolvei(pop);
+    // return evolvei(pop);
 }
-
-population bcemoa::evolvedm(machineDM &dm, population pop)
-{
-    // Call evolve from parent class (NSGA-II) for gen1
-    pop = nsga2::evolve(pop);
-    // Call interactive evolve of BCEMOA for geni
-    //    while(it <= maxit && res < threshold) {
-        pop = evolvei(dm, pop);
-        //}
-    return pop;
-}
+// // M:we can delet this function
+// population bcemoa::evolvedm(machineDM &dm, population pop)
+// {
+//     // Call evolve from parent class (NSGA-II) for gen1
+//     pop = nsga2::evolve(pop); // M: This should be deleted?
+//     // Call interactive evolve of BCEMOA for geni
+//     //    while(it <= maxit && res < threshold) {
+//     pop = evolvei(dm, pop);
+//     //}
+//     return pop;
+// }
 
 population bcemoa::evolvei(machineDM &dm, population pop)
-   {
-       // We store some useful variables
-       const auto &prob = pop.get_problem(); // This is a const reference, so using set_seed for example will not be
-                                             // allowed
-       auto dim = prob.get_nx();             // This getter does not return a const reference but a copy
-       auto NP = pop.size();
-       auto nobj = prob.get_nobj();
+{
+    dm.interact();
+    dm.train(&dm.train);
+    dm.SVMRank(&pop);
+    // We store some useful variables
+    const auto &prob = pop.get_problem(); // This is a const reference, so using set_seed for example will not be
+                                          // allowed
+    auto dim = prob.get_nx();             // This getter does not return a const reference but a copy
+    auto NP = pop.size();
+    auto nobj = prob.get_nobj();
 
-       auto fevals0 = prob.get_fevals(); // discount for the fevals already made
-       unsigned int count = 1u;          // regulates the screen output
+    auto fevals0 = prob.get_fevals(); // discount for the fevals already made
+    unsigned int count = 1u;          // regulates the screen output
 
-       vector_double w(nobj, 1.0 / nobj);
-       linear_value_function bcemoa_vf{w};
-            
-       // PREAMBLE-------------------------------------------------------------------------------------------------
-       // We start by checking that the problem is suitable for this
-       // particular algorithm.
-       if (detail::some_bound_is_equal(prob)) {
-           pagmo_throw(
-               std::invalid_argument,
-               get_name()
-                   + " cannot work on problems having a lower bound equal to an upper bound. Check your bounds.");
-       }
-       if (prob.is_stochastic()) {
-           pagmo_throw(std::invalid_argument,
-                       "The problem appears to be stochastic " + get_name() + " cannot deal with it");
-       }
-       if (prob.get_nc() != 0u) {
-           pagmo_throw(std::invalid_argument, "Non linear constraints detected in " + prob.get_name() + " instance. "
-                                                  + get_name() + " cannot deal with them.");
-       }
-       if (prob.get_nf() < 2u) {
-           pagmo_throw(std::invalid_argument,
-                       "This is a multiobjective algortihm, while number of objectives detected in " + prob.get_name()
-                           + " is " + std::to_string(prob.get_nf()));
-       }
-       if (NP < 5u || (NP % 4 != 0u)) {
-           pagmo_throw(std::invalid_argument,
-                       "for NSGA-II at least 5 individuals in the population are needed and the "
-                       "population size must be a multiple of 4. Detected input population size is: "
-                           + std::to_string(NP));
-       }
-       // ---------------------------------------------------------------------------------------------------------
+    vector_double w = dm.get_weights(); //(nobj, 1.0 / nobj);
+    // M: value function is passed to bcemoa already)linear_value_function bcemoa_vf{w};
 
-       // No throws, all valid: we clear the logs
-       m_log.clear();
+    // PREAMBLE-------------------------------------------------------------------------------------------------
+    // We start by checking that the problem is suitable for this
+    // particular algorithm.
+    if (detail::some_bound_is_equal(prob)) {
+        pagmo_throw(std::invalid_argument,
+                    get_name()
+                        + " cannot work on problems having a lower bound equal to an upper bound. Check your bounds.");
+    }
+    if (prob.is_stochastic()) {
+        pagmo_throw(std::invalid_argument,
+                    "The problem appears to be stochastic " + get_name() + " cannot deal with it");
+    }
+    if (prob.get_nc() != 0u) {
+        pagmo_throw(std::invalid_argument, "Non linear constraints detected in " + prob.get_name() + " instance. "
+                                               + get_name() + " cannot deal with them.");
+    }
+    if (prob.get_nf() < 2u) {
+        pagmo_throw(std::invalid_argument, "This is a multiobjective algortihm, while number of objectives detected in "
+                                               + prob.get_name() + " is " + std::to_string(prob.get_nf()));
+    }
+    if (NP < 5u || (NP % 4 != 0u)) {
+        pagmo_throw(std::invalid_argument,
+                    "for NSGA-II at least 5 individuals in the population are needed and the "
+                    "population size must be a multiple of 4. Detected input population size is: "
+                        + std::to_string(NP));
+    }
+    // ---------------------------------------------------------------------------------------------------------
 
-       // Declarations
-       std::vector<vector_double::size_type> best_idx(NP), shuffle1(NP), shuffle2(NP);
-       vector_double::size_type parent1_idx, parent2_idx;
-       vector_double child1(dim), child2(dim);
+    // No throws, all valid: we clear the logs
+    m_log.clear();
 
-       std::iota(shuffle1.begin(), shuffle1.end(), 0u);
-       std::iota(shuffle2.begin(), shuffle2.end(), 0u);
+    // Declarations
+    std::vector<vector_double::size_type> best_idx(NP), shuffle1(NP), shuffle2(NP);
+    vector_double::size_type parent1_idx, parent2_idx;
+    vector_double child1(dim), child2(dim);
 
-       // Main NSGA-II loop
-       for (decltype(m_gen) gen = 1u; gen <= m_geni; gen++) {
-           // 0 - Logs and prints (verbosity modes > 1: a line is added every m_verbosity generations)
-           if (m_verbosity > 0u) {
-               // Every m_verbosity generations print a log line
-               if (gen % m_verbosity == 1u || m_verbosity == 1u) {
-                   // We compute the ideal point
-                   vector_double ideal_point = ideal(pop.get_f());
-                   // Every 50 lines print the column names
-                   if (count % 50u == 1u) {
-                       print("\n", std::setw(7), "Gen:", std::setw(15), "Fevals:");
-                       for (decltype(ideal_point.size()) i = 0u; i < ideal_point.size(); ++i) {
-                           if (i >= 5u) {
-                               print(std::setw(15), "... :");
-                               break;
-                           }
-                           print(std::setw(15), "ideal" + std::to_string(i + 1u) + ":");
-                       }
-                       print('\n');
-                   }
-                   print(std::setw(7), gen, std::setw(15), prob.get_fevals() - fevals0);
-                   for (decltype(ideal_point.size()) i = 0u; i < ideal_point.size(); ++i) {
-                       if (i >= 5u) {
-                           break;
-                       }
-                       print(std::setw(15), ideal_point[i]);
-                   }
-                   print('\n');
-                   ++count;
-                   // Logs
-                   m_log.emplace_back(gen, prob.get_fevals() - fevals0, ideal_point);
-               }
-           }
+    std::iota(shuffle1.begin(), shuffle1.end(), 0u);
+    std::iota(shuffle2.begin(), shuffle2.end(), 0u);
 
-           // At each generation we make a copy of the population into popnew
-           population popnew(pop);
+    // Main NSGA-II loop
+    for (decltype(m_gen) gen = 1u; gen <= m_geni; gen++) {
+        // 0 - Logs and prints (verbosity modes > 1: a line is added every m_verbosity generations)
+        if (m_verbosity > 0u) {
+            // Every m_verbosity generations print a log line
+            if (gen % m_verbosity == 1u || m_verbosity == 1u) {
+                // We compute the ideal point
+                vector_double ideal_point = ideal(pop.get_f());
+                // Every 50 lines print the column names
+                if (count % 50u == 1u) {
+                    print("\n", std::setw(7), "Gen:", std::setw(15), "Fevals:");
+                    for (decltype(ideal_point.size()) i = 0u; i < ideal_point.size(); ++i) {
+                        if (i >= 5u) {
+                            print(std::setw(15), "... :");
+                            break;
+                        }
+                        print(std::setw(15), "ideal" + std::to_string(i + 1u) + ":");
+                    }
+                    print('\n');
+                }
+                print(std::setw(7), gen, std::setw(15), prob.get_fevals() - fevals0);
+                for (decltype(ideal_point.size()) i = 0u; i < ideal_point.size(); ++i) {
+                    if (i >= 5u) {
+                        break;
+                    }
+                    print(std::setw(15), ideal_point[i]);
+                }
+                print('\n');
+                ++count;
+                // Logs
+                m_log.emplace_back(gen, prob.get_fevals() - fevals0, ideal_point);
+            }
+        }
 
-           // We create some pseudo-random permutation of the poulation indexes
-           std::shuffle(shuffle1.begin(), shuffle1.end(), m_e);
-           std::shuffle(shuffle2.begin(), shuffle2.end(), m_e);
+        // At each generation we make a copy of the population into popnew
+        population popnew(pop);
 
-           // 1 - We compute crowding distance and non dominated rank for the current population
-           auto fnds_res = fast_non_dominated_sorting(pop.get_f());
-           auto ndf = std::get<0>(fnds_res); // non dominated fronts [[0,3,2],[1,5,6],[4],...]
-           vector_double pop_cd(NP);         // We use preference instead of crowding distances of the whole population
-           auto ndr = std::get<3>(fnds_res); // non domination rank [0,1,0,0,2,1,1, ... ]
-           vector_double v;
-           for (const auto &front_idxs : ndf) {
-               std::vector<vector_double> front;
-               for (auto idx : front_idxs) {
-                   
-                   v=pop.get_f()[idx];
-                   //pop_cd[idx] = accumulate(v.begin(), v.end(), 0.0) / v.size();
-                   pop_cd[idx] =   bcemoa_vf.value(v);//linear_value_function::value(v);//dm.linear_utility(v, w, ideal_point)
-               }
-           }
+        // We create some pseudo-random permutation of the poulation indexes
+        std::shuffle(shuffle1.begin(), shuffle1.end(), m_e);
+        std::shuffle(shuffle2.begin(), shuffle2.end(), m_e);
 
-           // 3 - We then loop thorugh all individuals with increment 4 to select two pairs of parents that will
-           // each create 2 new offspring
-           for (decltype(NP) i = 0u; i < NP; i += 4) {
-               // We create two offsprings using the shuffled list 1
-               parent1_idx = tournament_selection(shuffle1[i], shuffle1[i + 1], ndr, pop_cd);
-               parent2_idx = tournament_selection(shuffle1[i + 2], shuffle1[i + 3], ndr, pop_cd);
-               crossover(child1, child2, parent1_idx, parent2_idx, pop);
-               mutate(child1, pop);
-               mutate(child2, pop);
-               // we use prob to evaluate the fitness so
-               // that its feval counter is correctly updated
-               auto f1 = prob.fitness(child1);
-               auto f2 = prob.fitness(child2);
-               popnew.push_back(child1, f1);
-               popnew.push_back(child2, f2);
+        // 1 - We compute crowding distance and non dominated rank for the current population
+        auto fnds_res = fast_non_dominated_sorting(pop.get_f());
+        auto ndf = std::get<0>(fnds_res); // non dominated fronts [[0,3,2],[1,5,6],[4],...]
+        vector_double pop_cd(NP);         // We use preference instead of crowding distances of the whole population
+        auto ndr = std::get<3>(fnds_res); // non domination rank [0,1,0,0,2,1,1, ... ]
+        vector_double v;
+        for (const auto &front_idxs : ndf) {
+            std::vector<vector_double> front;
+            for (auto idx : front_idxs) {
 
-               // We repeat with the shuffled list 2
-               parent1_idx = tournament_selection(shuffle2[i], shuffle2[i + 1], ndr, pop_cd);
-               parent2_idx = tournament_selection(shuffle2[i + 2], shuffle2[i + 3], ndr, pop_cd);
-               crossover(child1, child2, parent1_idx, parent2_idx, pop);
-               mutate(child1, pop);
-               mutate(child2, pop);
-               // we use prob to evaluate the fitness so
-               // that its feval counter is correctly updated
-               f1 = prob.fitness(child1);
-               f2 = prob.fitness(child2);
-               popnew.push_back(child1, f1);
-               popnew.push_back(child2, f2);
-           } // popnew now contains 2NP individuals
+                v = pop.get_f()[idx];
+                // pop_cd[idx] = accumulate(v.begin(), v.end(), 0.0) / v.size();
+                pop_cd[idx] = dm.value(v);
+            }
+        }
 
-           // This method returns the sorted N best individuals in the population according to the crowded comparison
-           // operator
+        // 3 - We then loop thorugh all individuals with increment 4 to select two pairs of parents that will
+        // each create 2 new offspring
+        for (decltype(NP) i = 0u; i < NP; i += 4) {
+            // We create two offsprings using the shuffled list 1
+            parent1_idx = tournament_selection(shuffle1[i], shuffle1[i + 1], ndr, pop_cd);
+            parent2_idx = tournament_selection(shuffle1[i + 2], shuffle1[i + 3], ndr, pop_cd);
+            crossover(child1, child2, parent1_idx, parent2_idx, pop);
+            mutate(child1, pop);
+            mutate(child2, pop);
+            // we use prob to evaluate the fitness so
+            // that its feval counter is correctly updated
+            auto f1 = prob.fitness(child1);
+            auto f2 = prob.fitness(child2);
+            popnew.push_back(child1, f1);
+            popnew.push_back(child2, f2);
 
-           // MANUEL: shouldn't we sort individuals based on preference function???
-           best_idx = select_best_N_mo(popnew.get_f(), NP);
-           // We insert into the population
-           for (population::size_type i = 0; i < NP; ++i) {
-               pop.set_xf(i, popnew.get_x()[best_idx[i]], popnew.get_f()[best_idx[i]]);
-           }
-       } // end of main NSGAII loop
-       return pop;
-   }
+            // We repeat with the shuffled list 2
+            parent1_idx = tournament_selection(shuffle2[i], shuffle2[i + 1], ndr, pop_cd);
+            parent2_idx = tournament_selection(shuffle2[i + 2], shuffle2[i + 3], ndr, pop_cd);
+            crossover(child1, child2, parent1_idx, parent2_idx, pop);
+            mutate(child1, pop);
+            mutate(child2, pop);
+            // we use prob to evaluate the fitness so
+            // that its feval counter is correctly updated
+            f1 = prob.fitness(child1);
+            f2 = prob.fitness(child2);
+            popnew.push_back(child1, f1);
+            popnew.push_back(child2, f2);
+        } // popnew now contains 2NP individuals
+
+        // This method returns the sorted N best individuals in the population according to the crowded comparison
+        // operator
+
+        // MANUEL: shouldn't we sort individuals based on preference function???
+        // M: I have changed the value of the crowding distance to value function. the best individulas here are
+        // selected based on dominance and value function
+        best_idx = select_best_N_mo(popnew.get_f(), NP);
+        // We insert into the population
+        for (population::size_type i = 0; i < NP; ++i) {
+            pop.set_xf(i, popnew.get_x()[best_idx[i]], popnew.get_f()[best_idx[i]]);
+        }
+    } // end of main NSGAII loop
+    return pop;
+}
 /// Sets the seed
 /**
  * @param seed the seed controlling the algorithm stochastic behaviour

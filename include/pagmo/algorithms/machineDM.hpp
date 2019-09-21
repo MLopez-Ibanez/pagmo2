@@ -201,20 +201,25 @@ public:
      *
      *
      **/
+    vector_double train;
     vector_double fitness(const vector_double &) const;
+
+    vector_double get_weights();
     /* Select a subset of q criteria from m true criteria with probability
    proportional to their weights.  */
     vector_double select_criteria_subset(size_t q);
     int roulette_wheel(vector_double &);
     vector_double modify_criteria(vector_double &obf, const std::vector<int> &c, int q, double gamma);
 
-    double estim_valuefunc(vector_double &obj, const vector_double &alpha, const vector_double &beta,
-                           const vector_double &lambda, double gamma, double sigma, double delta, int q);
+    double dm_evaluate(vector_double &obj, const vector_double &alpha, const vector_double &beta,
+                       const vector_double &lambda, double gamma, double sigma, double delta, int q);
 
     double stewart_value_function(const vector_double &obj, const vector_double &alpha, const vector_double &beta,
                                   const vector_double &lambda, const vector_double &tau) const;
     double Rand_normal(double mean, double sd);
-
+    void interact(vector_double<std::vector<double>> &pop,
+                  int n); // M: The function selects some individuals in the population and gets their value from the
+                          // dm; The out put is used for training the Learning algorithm
     /**
      * Solution value according to DM.
      *
@@ -230,6 +235,11 @@ public:
     double true_value(const vector_double &) const;
 
     std::vector<size_t> rank(const pagmo::population &pop) const;
+
+    //SVM part; I Think we need to have a  "learning.hpp" with SVM as part of it.
+
+    void train(std::vector<vector_double> &);
+    void SVMrank(std::vector<vector_double> &);
 
     template <typename Archive>
     void serialize(Archive &ar, unsigned);

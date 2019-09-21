@@ -84,7 +84,10 @@ vector_double machineDM::select_criteria_subset(size_t q)
         probs[k] = 0.0;
     }
 }
-
+vector_double machineDM::get_weights()
+{
+    return this->pref.weights;
+}
 // This roulette_wheel function returns an index of an element based on the
 // probabilities constructed based on the values of the passed vector
 int machineDM::roulette_wheel(vector_double &v)
@@ -156,8 +159,25 @@ double machineDM::stewart_value_function(const vector_double &obj, const vector_
     return sum;
 }
 
-double machineDM::estim_valuefunc(vector_double &obj, const vector_double &alpha, const vector_double &beta,
-                                  const vector_double &lambda, double gamma, double sigma, double delta, int q)
+// M:It's been supposed that the training data is a vector of decision vectors. and their last member is the
+// dm_evaluated value
+machineDM::interact(vector_double<std::vector<double>> &pop, int n)
+{
+    vector_double ind;
+    int i = pop.size() - 1, j;
+    std::vector<int> index;
+    std::fill(index.begin(), index.end(), i--);
+    for (i = 0; i < n; i++) {
+        j = roulette_wheel(index);
+        ind = pop[j];
+        ind.pushback(dm_evaluate(ind));
+        this->train.push_back(ind);
+    }
+}
+void machineDM::train(std::vector<vector_double> &train) {}
+void machineDM::SVMrank(std::vector<vector_double> &pop) {}
+double machineDM::dm_evaluate(vector_double &obj, const vector_double &alpha, const vector_double &beta,
+                              const vector_double &lambda, double gamma, double sigma, double delta, int q)
 {
     int m = obj.size();
     vector_double tau = this->pref.ideal_point; // M: I'm not sure if this is a right way to access the ideal_point
@@ -195,6 +215,7 @@ double machineDM::estim_valuefunc(vector_double &obj, const vector_double &alpha
     return estim_v;
 }
 double machineDM::Rand_normal(double mean, double sd)
+
 /** REFERENCES (http://www.cast.uark.edu/~kkvamme/ACN37.htm)
 
  Hays, W.L.
