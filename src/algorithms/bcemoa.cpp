@@ -90,9 +90,7 @@ population bcemoa::evolve(population pop) const
 
 population bcemoa::evolvei(machineDM &dm, population pop)
 {
-    dm.interact();
-    dm.train(&dm.train);
-    dm.SVMRank(&pop);
+
     // We store some useful variables
     const auto &prob = pop.get_problem(); // This is a const reference, so using set_seed for example will not be
                                           // allowed
@@ -192,14 +190,22 @@ population bcemoa::evolvei(machineDM &dm, population pop)
         vector_double pop_cd(NP);         // We use preference instead of crowding distances of the whole population
         auto ndr = std::get<3>(fnds_res); // non domination rank [0,1,0,0,2,1,1, ... ]
         vector_double v;
-        for (const auto &front_idxs : ndf) {
-            std::vector<vector_double> front;
-            for (auto idx : front_idxs) {
+        if (dm.mode == 1) {
+            for (const auto &front_idxs : ndf) {
+                std::vector<vector_double> front;
+                for (auto idx : front_idxs) {
 
-                v = pop.get_f()[idx];
-                // pop_cd[idx] = accumulate(v.begin(), v.end(), 0.0) / v.size();
-                pop_cd[idx] = dm.value(v);
+                    v = pop.get_f()[idx];
+                    // pop_cd[idx] = accumulate(v.begin(), v.end(), 0.0) / v.size();
+                    pop_cd[idx] = dm.value(v);
+                }
             }
+        }
+        if (dm.mode != 1) {
+
+            dm.interact();
+            dm.train(dm.train);
+            dm.SVMRank(pop); // M: I need to know the mechanism of SVM, if it can evaluate the VF of individuals or not
         }
 
         // 3 - We then loop thorugh all individuals with increment 4 to select two pairs of parents that will

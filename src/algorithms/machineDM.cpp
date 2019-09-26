@@ -170,7 +170,11 @@ machineDM::interact(vector_double<std::vector<double>> &pop, int n)
     for (i = 0; i < n; i++) {
         j = roulette_wheel(index);
         ind = pop[j];
-        ind.pushback(dm_evaluate(ind));
+        if (this->mode == 2) {
+            ind.pushback(this->pref.value(ind));
+        } else {
+            ind.pushback(dm_evaluate(ind));
+        }
         this->train.push_back(ind);
     }
 }

@@ -193,14 +193,15 @@ public:
      * @throws std::invalid_argument if \p cr is not \f$ \in [0,1[\f$, \p m is not \f$ \in [0,1]\f$, \p eta_c is not in
      * [1,100[ or \p eta_m is not in [1,100[.
      */
-    machineDM(problem &prob, value_function &pref, unsigned seed = pagmo::random_device::next())
-        : prob(prob), pref(pref){};
+    machineDM(problem &prob, value_function &pref, unsigned mode, unsigned seed = pagmo::random_device::next())
+        : prob(prob), pref(pref), mode(mode){};
 
     /**
      * Evaluate fitness (objective vector) according to decision maker.
      *
      *
      **/
+
     vector_double train;
     vector_double fitness(const vector_double &) const;
 
@@ -236,14 +237,14 @@ public:
 
     std::vector<size_t> rank(const pagmo::population &pop) const;
 
-    //SVM part; I Think we need to have a  "learning.hpp" with SVM as part of it.
+    // SVM part; I Think we need to have a  "learning.hpp" with SVM as part of it.
 
     void train(std::vector<vector_double> &);
     void SVMrank(std::vector<vector_double> &);
 
     template <typename Archive>
     void serialize(Archive &ar, unsigned);
-
+    unsigned mode;
     value_function &pref;
     problem &prob;
 };
