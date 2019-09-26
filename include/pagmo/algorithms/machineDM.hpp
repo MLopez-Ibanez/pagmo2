@@ -202,7 +202,7 @@ public:
      *
      **/
 
-    vector_double train;
+    std::vector<vector_double> trainFile;
     vector_double fitness(const vector_double &) const;
 
     vector_double get_weights();
@@ -218,7 +218,7 @@ public:
     double stewart_value_function(const vector_double &obj, const vector_double &alpha, const vector_double &beta,
                                   const vector_double &lambda, const vector_double &tau) const;
     double Rand_normal(double mean, double sd);
-    void interact(vector_double<std::vector<double>> &pop,
+    void interact(std::vector<vector_double>,
                   int n); // M: The function selects some individuals in the population and gets their value from the
                           // dm; The out put is used for training the Learning algorithm
     /**
@@ -240,7 +240,7 @@ public:
     // SVM part; I Think we need to have a  "learning.hpp" with SVM as part of it.
 
     void train(std::vector<vector_double> &);
-    void SVMrank(std::vector<vector_double> &);
+    void SVMrank(std::vector<vector_double>);
 
     template <typename Archive>
     void serialize(Archive &ar, unsigned);

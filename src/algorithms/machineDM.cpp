@@ -161,25 +161,25 @@ double machineDM::stewart_value_function(const vector_double &obj, const vector_
 
 // M:It's been supposed that the training data is a vector of decision vectors. and their last member is the
 // dm_evaluated value
-machineDM::interact(vector_double<std::vector<double>> &pop, int n)
+void machineDM::interact(std::vector<vector_double> fVals, int n)
 {
     vector_double ind;
-    int i = pop.size() - 1, j;
-    std::vector<int> index;
+    int i = fVals.size() - 1, j;
+    std::vector<double> index;
     std::fill(index.begin(), index.end(), i--);
-    for (i = 0; i < n; i++) {
-        j = roulette_wheel(index);
-        ind = pop[j];
-        if (this->mode == 2) {
-            ind.pushback(this->pref.value(ind));
-        } else {
-            ind.pushback(dm_evaluate(ind));
-        }
-        this->train.push_back(ind);
-    }
+    // for (i = 0; i < n; i++) {
+    //     j = roulette_wheel(index);
+    //     ind = fVals[j];
+    //     if (this->mode == 2) {
+    //         ind.push_back(this->pref.value(ind));
+    //     } else {
+    //         ind.push_back(dm_evaluate(ind));
+    //     }
+    //     this->trainFile.push_back(ind);
+    // }
 }
-void machineDM::train(std::vector<vector_double> &train) {}
-void machineDM::SVMrank(std::vector<vector_double> &pop) {}
+void machineDM::train(std::vector<vector_double> &trainFile) {}
+void machineDM::SVMrank(std::vector<vector_double> pop) {}
 double machineDM::dm_evaluate(vector_double &obj, const vector_double &alpha, const vector_double &beta,
                               const vector_double &lambda, double gamma, double sigma, double delta, int q)
 {

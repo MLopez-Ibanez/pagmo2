@@ -203,9 +203,10 @@ population bcemoa::evolvei(machineDM &dm, population pop)
         }
         if (dm.mode != 1) {
 
-            dm.interact();
-            dm.train(dm.train);
-            dm.SVMRank(pop); // M: I need to know the mechanism of SVM, if it can evaluate the VF of individuals or not
+            dm.interact(pop.get_f(), 10);
+            dm.train(dm.trainFile);
+            std::vector<vector_double> temp = pop.get_f();
+            dm.SVMrank(temp); // M: I need to know the mechanism of SVM, if it can evaluate the VF of individuals or not
         }
 
         // 3 - We then loop thorugh all individuals with increment 4 to select two pairs of parents that will
