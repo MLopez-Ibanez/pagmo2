@@ -139,9 +139,7 @@ vector_double machineDM::modify_criteria(
 
     return zhat;
 }
-double machineDM::stewart_value_function(const vector_double &obj, const vector_double &alpha,
-                                         const vector_double &beta, const vector_double &lambda,
-                                         const vector_double &tau) const
+double machineDM::stewart_value_function(const vector_double &obj, const vector_double &tau) const
 {
     double sum = 0.0;
     double st;
@@ -180,8 +178,9 @@ void machineDM::interact(std::vector<vector_double> fVals, int n)
 }
 void machineDM::train(std::vector<vector_double> &trainFile) {}
 void machineDM::SVMrank(std::vector<vector_double> pop) {}
-double machineDM::dm_evaluate(vector_double &obj, const vector_double &alpha, const vector_double &beta,
-                              const vector_double &lambda, double gamma, double sigma, double delta, int q)
+double machineDM::dm_evaluate(
+    vector_double &obj) // moved onst vector_double &alpha, const vector_double &beta, const vector_double &lambda,
+                        // double gamma, double sigma, double delta, int q to machineDM calss parameters
 {
     int m = obj.size();
     vector_double tau = this->pref.ideal_point; // M: I'm not sure if this is a right way to access the ideal_point
@@ -196,7 +195,7 @@ double machineDM::dm_evaluate(vector_double &obj, const vector_double &alpha, co
         }
     }
 
-    vector_double z_mod = machineDM::modify_criteria(obj, c, q, gamma);
+    vector_double z_mod = machineDM::modify_criteria(obj, c);
 
     /*
       (b) the addition of a noise term, normally
@@ -257,7 +256,8 @@ double machineDM::value(const vector_double &solution) const
 {
     vector_double f = this->fitness(solution);
     // FIXME: Apply biases
-    return pref.value(f);
+    if (this->mode != IMF) return pref.value(f);
+    return dm_evaluate(f);
 }
 
 double machineDM::true_value(const vector_double &solution) const

@@ -10,6 +10,10 @@
 #include <pagmo/problem.hpp>
 #include <pagmo/rng.hpp>
 
+#define NI 1  // No interaction
+#define ITV 2 // Interaction with true value
+#define IMV   // Interaction with modified value
+
 namespace pagmo
 {
 class PAGMO_DLL_PUBLIC value_function
@@ -210,13 +214,11 @@ public:
    proportional to their weights.  */
     vector_double select_criteria_subset(size_t q);
     int roulette_wheel(vector_double &);
-    vector_double modify_criteria(vector_double &obf, const std::vector<int> &c, int q, double gamma);
+    vector_double modify_criteria(vector_double &obf, const std::vector<int> &c);
 
-    double dm_evaluate(vector_double &obj, const vector_double &alpha, const vector_double &beta,
-                       const vector_double &lambda, double gamma, double sigma, double delta, int q);
+    double dm_evaluate(vector_double &obj);
 
-    double stewart_value_function(const vector_double &obj, const vector_double &alpha, const vector_double &beta,
-                                  const vector_double &lambda, const vector_double &tau) const;
+    double stewart_value_function(const vector_double &obj, const vector_double &tau) const;
     double Rand_normal(double mean, double sd);
     void interact(std::vector<vector_double>,
                   int n); // M: The function selects some individuals in the population and gets their value from the
@@ -244,6 +246,9 @@ public:
 
     template <typename Archive>
     void serialize(Archive &ar, unsigned);
+    vector_double alpha, beta, lambdal;
+    double gamma, sigma, delta;
+    int q;
     unsigned mode;
     value_function &pref;
     problem &prob;

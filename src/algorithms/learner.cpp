@@ -15,7 +15,6 @@
 #include <boost/range/combine.hpp>
 
 #include <pagmo/algorithm.hpp>
-#include <pagmo/algorithms/machineDM.hpp>
 #include <pagmo/exceptions.hpp>
 #include <pagmo/io.hpp>
 #include <pagmo/population.hpp>
@@ -55,29 +54,42 @@ void svm::init()
     m_num_test_examples = (long *)calloc(m_cv_k, sizeof(long));
 }
 
-void svm::setRankingPreferences(population *pop, int start, int popsize, int objsize)
+// Sets the preference value or comparison values (somehow Non domination value based on preference values)
+void svm::setPreferences(population &pop, int start, int popsize, int objsize,
+                         bool rankerprefs) // M: where is this function used? not useful
+{
+    if (!rankerprefs) // M: if randerprefs is false then setRankingPrefereces? shouldn't it be vice versa?
+        setRankingPreferences(pop, start, popsize, objsize);
+    else
+        for (int i = start; i < popsize; i++) {
+            // compute preference for current individual
+            pop.pref[i] = dm.value(pop.m_f[i]);
+        };
+}
+
+// comparing the solutions by DM 2 by 2
+void svm::setRankingPreferences(population &pop, int start, int popsize, int objsize)
 {
     // init ranking preferences to 0
     for (int i = start; i < popsize; i++) {
         // init preference for current individual
-        pop->ind[i].preference = 0;
+        pop.pref[i] = 0;
     }
     double pref;
     for (int i = start; i < popsize; i++)
         for (int j = i + 1; j < popsize; j++) {
-            pref = userPreference(pop->ind[i].obj, pop->ind[j].obj, objsize);
+            pref = dm.value(pop.m_f[i]) - dm.value(dm.value[j]); // M: instead of userPreference in old files
 
-            if (pref <= 0) pop->ind[i].preference--;
-            if (pref >= 0) pop->ind[j].preference--;
+            if (pref <= 0) pop.pref[i]--;
+            if (pref >= 0) pop.pref[j]--;
         }
 }
 
-double PreferenceRanker::train(population *pop, int start, int popsize, int objsize)
+double svm::train(population &pop, int start, int popsize, int objsize)
 {
     double results = 0.;
 
     m_max_feature_id = objsize;
-
     // add current individuals to training set
     updateSvmProblem(&m_examples, &m_targets, &m_num_examples, m_curr_iteration, pop, start, popsize, objsize);
 
@@ -200,8 +212,8 @@ double svm::do_cross_validation()
     return (avgperf / m_cv_k);
 }
 
-void PreferenceRanker::updateSvmProblem(DOC ***examples_p, double **targets_p, long *num_examples_p, long qid,
-                                        population *pop, int popstart, int popsize, int objsize)
+void svm::updateSvmProblem(DOC ***examples_p, double **targets_p, long *num_examples_p, long qid, population &pop,
+                           int popstart, int popsize, int objsize)
 {
     // update set size
     long exstart = *num_examples_p;
@@ -220,12 +232,12 @@ void PreferenceRanker::updateSvmProblem(DOC ***examples_p, double **targets_p, l
         *targets_p = (double *)calloc((*num_examples_p), sizeof(double));
 
     for (int i = popstart, e = exstart; i < popsize; i++, e++) {
-        (*targets_p)[e] = pop->ind[i].preference;
-        (*examples_p)[e] = create_instance(e, pop->ind[i].obj, objsize, qid + 1);
+        (*targets_p)[e] = pop.pref[i];
+        (*examples_p)[e] = create_instance(e, pop.m_f[i], objsize, qid + 1);
     }
 }
 
-DOC *svm::create_instance(int instnum, double *obj, int objsize, int qid)
+DOC *svm::create_instance(int instnum, vector_double &obj, int objsize, int qid)
 {
     WORD *words = (WORD *)my_malloc(sizeof(WORD) * (objsize + 1));
 
@@ -244,7 +256,7 @@ DOC *svm::create_instance(int instnum, double *obj, int objsize, int qid)
     return doc;
 }
 
-void svm::updateCVProblems(population *pop, int popstart, int popsize, int objsize)
+void svm::updateCVProblems(population &pop, int popstart, int popsize, int objsize)
 {
     if (popstart != 0) {
         cerr << "ERROR: assuming zero popstart" << endl;
@@ -286,7 +298,7 @@ void svm::updateCVProblems(population *pop, int popstart, int popsize, int objsi
                              pos, pos + 1, objsize);
     }
 }
-double svm::preference(double *obj, int objsize, bool rankerprefs)
+double svm::preference(vector_double &obj, int objsize, bool rankerprefs)
 {
     double pref;
     DOC *x;
@@ -302,7 +314,7 @@ double svm::preference(double *obj, int objsize, bool rankerprefs)
 
         free_example(x, 1);
     } else {
-        pref = userPreference(obj, objsize); // M: userPreference is the golden one?
+        pref = this->dm.value(obj);
     }
     return pref;
 }
@@ -378,8 +390,8 @@ double svm::test(DOC **examples, double *targets, long num_examples)
     return corrcoeff(preds_sort, positions_sort);
 }
 
-void PreferenceRanker::parse_command_line(int start, int argc, char *argv[], long *verbosity, LEARN_PARM *learn_parm,
-                                          KERNEL_PARM *kernel_parm)
+void svm::parse_command_line(int start, int argc, char *argv[], long *verbosity, LEARN_PARM *learn_parm,
+                             KERNEL_PARM *kernel_parm)
 {
     long i;
     char type[100];

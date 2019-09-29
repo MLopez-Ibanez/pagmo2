@@ -281,6 +281,14 @@ public:
         return m_x;
     }
 
+    /// Const getter for the preferences.
+    /**
+     * @return a const reference to the vector of preferences.
+     */
+    const std::vector<vector_double> &get_pref() const
+    {
+        return m_pref;
+    }
     /// Const getter for the individual IDs.
     /**
      * @return a const reference to the vector of individual IDs.
@@ -355,6 +363,8 @@ private:
     std::vector<vector_double> m_x;
     // Fitness vectors.
     std::vector<vector_double> m_f;
+    // Desirability/Preference
+    vector_double m_pref;
     // The Champion chromosome
     vector_double m_champion_x;
     // The Champion fitness
