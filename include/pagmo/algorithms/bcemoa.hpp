@@ -33,6 +33,7 @@ see https://www.gnu.org/licenses/. */
 #include <tuple>
 #include <vector>
 
+#include <pagmo/algorithms/learner.hpp>
 #include <pagmo/algorithms/machineDM.hpp>
 #include <pagmo/algorithms/nsga2.hpp>
 
@@ -59,19 +60,26 @@ public:
      * [1,100[ or \p eta_m is not in [1,100[.
      */
     // FIXME: Cannot add empty parameter machineDM dm
-    bcemoa(unsigned gen1 = 1u, unsigned geni = 10u, double cr = 0.95, double eta_c = 10., double m = 0.01, double eta_m = 50.,
-            unsigned seed = pagmo::random_device::next());
+    bcemoa(unsigned gen1 = 1u, unsigned geni = 10u, maxInt = 20, nOfEvals = 5;
+           double cr = 0.95, double eta_c = 10., double m = 0.01, double eta_m = 50., svm &l,
+           unsigned seed = pagmo::random_device::next())
+        : ml(l){}, maxInteractions(maxInt), n_of_evals(nOfEvals);
+
+    svm ml;
+    int maxInteractions;
+    int n_of_evals;
 
     // Algorithm evolve method
-    population evolve(population) const;
+    population evolve(&population) const;
 
     // population evolvedm(machineDM &dm, population);
-    //Algorithm evolve based on preference information
-    population evolvei(machineDM &dm, population);
+    // Algorithm evolve based on preference information
+    population evolvei(&population);
 
     // FIXME: Report to pagmo that if we don't duplicate this, we get
     /* bcemoa.o: In function `pagmo::detail::algo_inner<pagmo::bcemoa>::set_seed(unsigned int)':
-bcemoa.cpp:(.text._ZN5pagmo6detail10algo_innerINS_6bcemoaEE8set_seedEj[_ZN5pagmo6detail10algo_innerINS_6bcemoaEE8set_seedEj]+0x5): undefined reference to `pagmo::bcemoa::set_seed(unsigned int)'
+bcemoa.cpp:(.text._ZN5pagmo6detail10algo_innerINS_6bcemoaEE8set_seedEj[_ZN5pagmo6detail10algo_innerINS_6bcemoaEE8set_seedEj]+0x5):
+undefined reference to `pagmo::bcemoa::set_seed(unsigned int)'
     */
     // Sets the seed
     void set_seed(unsigned);
@@ -93,8 +101,7 @@ bcemoa.cpp:(.text._ZN5pagmo6detail10algo_innerINS_6bcemoaEE8set_seedEj[_ZN5pagmo
     void serialize(Archive &, unsigned);
 
 private:
-
-//    machineDM m_dm;
+    //    machineDM m_dm;
     unsigned m_geni;
 };
 

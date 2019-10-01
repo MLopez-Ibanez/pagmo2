@@ -75,6 +75,7 @@ class PAGMO_DLL_PUBLIC svm
     // whether to perform model selection
     bool m_do_model_selection;
     double m_results_threshold;
+    machineDM mdm;
 
 public:
     void setPreferences(population &pop, int start, int popsize, int objsize, bool rankerprefs);
@@ -83,7 +84,7 @@ public:
 
 protected:
     void free_examples(DOC **examples, long num_examples); // Deletes the training examples
-    void init();                                           // Iniializes the training set
+    void init();
     void setRankingPreferences(population *pop, int start, int popsize, int objsize);
     double train(population *pop, int start, int popsize, int objsize);
     double do_model_selection();

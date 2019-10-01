@@ -53,10 +53,9 @@ see https://www.gnu.org/licenses/. */
 namespace pagmo
 {
 
-bcemoa::bcemoa(unsigned gen1, unsigned geni, double cr, double eta_c, double m, double eta_m, unsigned seed)
-    : nsga2(gen1, cr, eta_c, m, eta_m, seed), m_geni(geni)
-{
-}
+// bcemoa(unsigned gen1 = 1u, unsigned geni = 10u, maxInt = 20, double cr = 0.95, double eta_c = 10., double m = 0.01,
+//        double eta_m = 50., svm &l, unsigned seed = pagmo::random_device::next())
+//     : ml(l), maxInteractions(maxInt){};
 
 /// Algorithm evolve method
 /**
@@ -69,16 +68,17 @@ bcemoa::bcemoa(unsigned gen1, unsigned geni, double cr, double eta_c, double m, 
  * 4.
  */
 
-population bcemoa::evolve(population pop) const
+population bcemoa::evolve(population &pop) const
 {
     // Call evolve from parent class (NSGA-II) for gen1
-    return nsga2::evolve(pop);
+    nsga2::evolve(pop);
     // Call interactive evolve of BCEMOA for geni
+    for (int i = 0; i < maxInteractions; i++) {
+        evolvei(pop);
+    }
     // return evolvei(pop);
 }
-// // M:we can delet this function
-// population bcemoa::evolvedm(machineDM &dm, population pop)
-// {
+
 //     // Call evolve from parent class (NSGA-II) for gen1
 //     pop = nsga2::evolve(pop); // M: This should be deleted?
 //     // Call interactive evolve of BCEMOA for geni
@@ -88,9 +88,26 @@ population bcemoa::evolve(population pop) const
 //     return pop;
 // }
 
-population bcemoa::evolvei(machineDM &dm, population pop)
+population bcemoa::evolvei(population &pop)
 {
-
+    // create a population of m randomly selected individuals for training
+    if (ml->dm.mode != 1) {
+        population trainingPop;
+        auto fnds_res = fast_non_dominated_sorting(pop.get_f());
+        auto ndf = std::get<0>(fnds_res); // non dominated fronts [[0,3,2],[1,5,6],[4],...]
+        std::vector<double, ndf.size()> index;
+        std::fill(index.begin(), index.end(), 1);
+        int j;
+        for (i = 0; i < n_of_evals; i++) {
+            j = roulette_wheel(index);
+            trainingPop.pushback(pop.get_x(j), pop.get_f(j));
+        }
+        std::vector<vector_double> f = pop.get_f();
+        // update svm problems
+        // train svm MODEL
+        results = train(trainingPop, 0, trainingPop.size(), f[1].size);
+        // rank original population by model in the crowding distance calculations
+    }
     // We store some useful variables
     const auto &prob = pop.get_problem(); // This is a const reference, so using set_seed for example will not be
                                           // allowed
@@ -101,7 +118,7 @@ population bcemoa::evolvei(machineDM &dm, population pop)
     auto fevals0 = prob.get_fevals(); // discount for the fevals already made
     unsigned int count = 1u;          // regulates the screen output
 
-    vector_double w = dm.get_weights(); //(nobj, 1.0 / nobj);
+    vector_double w = ml->dm.get_weights(); //(nobj, 1.0 / nobj);
     // M: value function is passed to bcemoa already)linear_value_function bcemoa_vf{w};
 
     // PREAMBLE-------------------------------------------------------------------------------------------------
@@ -190,23 +207,21 @@ population bcemoa::evolvei(machineDM &dm, population pop)
         vector_double pop_cd(NP);         // We use preference instead of crowding distances of the whole population
         auto ndr = std::get<3>(fnds_res); // non domination rank [0,1,0,0,2,1,1, ... ]
         vector_double v;
-        if (dm.mode == 1) {
-            for (const auto &front_idxs : ndf) {
-                std::vector<vector_double> front;
-                for (auto idx : front_idxs) {
 
-                    v = pop.get_f()[idx];
+        for (const auto &front_idxs : ndf) {
+            std::vector<vector_double> front;
+            for (auto idx : front_idxs) {
+
+                v = pop.get_f()[idx];
+                if (ml->dm.mode == 1) {
                     // pop_cd[idx] = accumulate(v.begin(), v.end(), 0.0) / v.size();
                     pop_cd[idx] = dm.value(v);
                 }
+                if (ml->dm.mode != 1) {
+                    // rank the model by svm;
+                    pop_cd[idx] = ml.preference(v, v.size(), 1);
+                }
             }
-        }
-        if (dm.mode != 1) {
-
-            dm.interact(pop.get_f(), 10);
-            dm.train(dm.trainFile);
-            std::vector<vector_double> temp = pop.get_f();
-            dm.SVMrank(temp); // M: I need to know the mechanism of SVM, if it can evaluate the VF of individuals or not
         }
 
         // 3 - We then loop thorugh all individuals with increment 4 to select two pairs of parents that will
