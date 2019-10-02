@@ -24,6 +24,10 @@
 #include <pagmo/utils/generic.hpp>
 #include <pagmo/utils/multi_objective.hpp>
 
+#define NI 1  // No interaction
+#define ITV 2 // Interaction with true value
+#define IMV   // Interaction with modified value
+
 namespace pagmo
 {
 
@@ -66,23 +70,23 @@ double tchebycheff_value_function::value(const std::vector<double> &obj) const
 }
 /* Select a subset of q criteria from m true criteria with probability
    proportional to their weights.  */
-vector_double machineDM::select_criteria_subset(size_t q)
+std::vector<int> machineDM::select_criteria_subset()
 {
     vector_double w = this->pref.weights;
-    vector_double c;
-    size_t m = w.size();
+    std::vector<int> c(w.size());
     double sum = accumulate(w.begin(), w.end(), 0);
-    vector_double probs(m);
-    for (size_t i = 0; i < m; i++) {
+    vector_double probs(w.size());
+    for (size_t i = 0; i < w.size(); i++) {
         probs[i] = w[i] / sum; // M: instead of ranking the elements based on weights, I directly use weights to
                                // calculate the prob. There is no need to rank them I think
     }
-
-    for (size_t i = 0; i < m; i++) {
-        int k = roulette_wheel(probs);
+    int k;
+    for (size_t i = 0; i < w.size(); i++) {
+        k = roulette_wheel(probs);
         c[i] = k;
         probs[k] = 0.0;
     }
+    return c;
 }
 vector_double machineDM::get_weights()
 {
@@ -107,8 +111,8 @@ int machineDM::roulette_wheel(vector_double &v)
     }
 }
 vector_double machineDM::modify_criteria(
-    vector_double &obf, const std::vector<int> &c, int q,
-    double gamma) // M: I have assumed that tau in previous vrsion is ideal point. thus I have changed it
+    vector_double &obf,
+    const std::vector<int> &c) // M: I have assumed that tau in previous vrsion is ideal point. thus I have changed it
 {
     assert(gamma >= 0);
     assert(gamma < 1);
@@ -159,35 +163,17 @@ double machineDM::stewart_value_function(const vector_double &obj, const vector_
 
 // M:It's been supposed that the training data is a vector of decision vectors. and their last member is the
 // dm_evaluated value
-void machineDM::interact(std::vector<vector_double> fVals, int n)
-{
-    vector_double ind;
-    int i = fVals.size() - 1, j;
-    std::vector<double> index;
-    std::fill(index.begin(), index.end(), i--);
-    // for (i = 0; i < n; i++) {
-    //     j = roulette_wheel(index);
-    //     ind = fVals[j];
-    //     if (this->mode == 2) {
-    //         ind.push_back(this->pref.value(ind));
-    //     } else {
-    //         ind.push_back(dm_evaluate(ind));
-    //     }
-    //     this->trainFile.push_back(ind);
-    // }
-}
-void machineDM::train(std::vector<vector_double> &trainFile) {}
-void machineDM::SVMrank(std::vector<vector_double> pop) {}
+
 double machineDM::dm_evaluate(
-    vector_double &obj) // moved onst vector_double &alpha, const vector_double &beta, const vector_double &lambda,
-                        // double gamma, double sigma, double delta, int q to machineDM calss parameters
+    vector_double &obj) // moved onst vector_double &alpha, const vector_double &beta, const vector_double
+                        // &lambda, double gamma, double sigma, double delta, int q to machineDM calss parameters
 {
     int m = obj.size();
     vector_double tau = this->pref.ideal_point; // M: I'm not sure if this is a right way to access the ideal_point
     std::vector<int> c(m);
 
     if (q < m) {
-        machineDM::select_criteria_subset(q);
+        c = machineDM::select_criteria_subset();
     } else {
         assert(q == m);
         for (size_t i = 0; i < m; i++) {
@@ -214,7 +200,7 @@ double machineDM::dm_evaluate(
         tau_mod[i] = tau[i] + delta;
     }
 
-    double estim_v = noise + machineDM::stewart_value_function(z_mod, alpha, beta, lambda, tau_mod);
+    double estim_v = noise + machineDM::stewart_value_function(z_mod, tau_mod);
     return estim_v;
 }
 double machineDM::Rand_normal(double mean, double sd)
@@ -252,11 +238,13 @@ vector_double machineDM::fitness(const vector_double &solution) const
     return f;
 }
 
-double machineDM::value(const vector_double &solution) const
+double machineDM::value(const vector_double &solution)
 {
-    vector_double f = this->fitness(solution);
+    vector_double f = fitness(solution);
     // FIXME: Apply biases
-    if (this->mode != IMF) return pref.value(f);
+    if (this->mode == NI) {
+        return pref.value(f);
+    }
     return dm_evaluate(f);
 }
 

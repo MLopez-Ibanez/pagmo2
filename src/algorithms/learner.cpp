@@ -85,7 +85,7 @@ void svm::setRankingPreferences(population &pop, int start, int popsize, int obj
         }
 }
 
-double svm::train(population &pop, int start, int popsize, int objsize)
+double svm::train(pagmo::population &pop, int start, int popsize, int objsize)
 {
     double results = 0.;
 
@@ -298,24 +298,24 @@ void svm::updateCVProblems(population &pop, int popstart, int popsize, int objsi
                              pos, pos + 1, objsize);
     }
 }
-double svm::preference(vector_double &obj, int objsize, bool rankerprefs)
+double svm::preference(vector_double &obj, int objsize) // deleted bool rankerprefs from the function
 {
     double pref;
     DOC *x;
 
-    if (!m_use_gold_preference && rankerprefs) {
+    // if (!m_use_gold_preference && rankerprefs) {
 
-        x = create_instance(0, obj, objsize, 1);
+    x = create_instance(0, obj, objsize, 1);
 
-        if (m_model->kernel_parm.kernel_type == 0) /* linear kernel */
-            pref = classify_example_linear(m_model, x);
-        else
-            pref = classify_example(m_model, x);
+    if (m_model->kernel_parm.kernel_type == 0) /* linear kernel */
+        pref = classify_example_linear(m_model, x);
+    else
+        pref = classify_example(m_model, x);
 
-        free_example(x, 1);
-    } else {
-        pref = this->dm.value(obj);
-    }
+    free_example(x, 1);
+    // } else {
+    //     pref = this->dm.value(obj);
+    // }
     return pref;
 }
 

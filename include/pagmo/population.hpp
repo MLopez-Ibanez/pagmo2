@@ -285,7 +285,7 @@ public:
     /**
      * @return a const reference to the vector of preferences.
      */
-    const std::vector<vector_double> &get_pref() const
+    const vector_double &get_pref() const
     {
         return m_pref;
     }

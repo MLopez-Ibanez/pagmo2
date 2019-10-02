@@ -12,15 +12,16 @@
 #include <pagmo/rng.hpp>
 
 extern "C" {
-#include "svm_rank/svm_light/svm_common.h"
-#include "svm_rank/svm_light/svm_learn.h"
+#include "pagmo/utils/svm_common.h"
+#include "pagmo/utils/svm_learn.h"
 }
 
 namespace pagmo
 {
 class PAGMO_DLL_PUBLIC svm
 {
-    svm::svm(machineDM dm, int start, int argc, char **argv)
+public:
+    svm(machineDM dm, int start, int argc, char **argv)
         : start(start), mdm(dm) // M: WE may also define svm as a derived class od machineDM so it can access the
                                 // utility funcionts and etc
     {
@@ -29,7 +30,7 @@ class PAGMO_DLL_PUBLIC svm
         init();
     };
 
-    svm::~svm()
+    ~svm()
     {
         free_model(m_model, 0);
         free_examples(m_examples, m_num_examples);
@@ -77,23 +78,24 @@ class PAGMO_DLL_PUBLIC svm
     double m_results_threshold;
     machineDM mdm;
 
-public:
     void setPreferences(population &pop, int start, int popsize, int objsize, bool rankerprefs);
-    double preference(double *obj, int objsize, bool rankerprefs);
+    double preference(vector_double &obj, int objsize); //, bool rankerprefs
     static void print_help();
+    double train(pagmo::population &pop, int start, int popsize, int objsize);
 
 protected:
+    int start;
     void free_examples(DOC **examples, long num_examples); // Deletes the training examples
     void init();
-    void setRankingPreferences(population *pop, int start, int popsize, int objsize);
-    double train(population *pop, int start, int popsize, int objsize);
+    void setRankingPreferences(population &pop, int start, int popsize, int objsize);
+
     double do_model_selection();
     void do_model_evaluation(double *best_performance, int *best_kernel_type, int *best_degree, double *best_gamma);
     double do_cross_validation();
     void updateSvmProblem(DOC ***examples_p, double **targets_p, long *num_examples_p, long qid, population *pop,
                           int popstart, int popsize, int objsize);
     DOC *create_instance(int instnum, double *obj, int objsize, int qid);
-    void updateCVProblems(population *pop, int popstart, int popsize, int objsize);
+    void updateCVProblems(population &pop, int popstart, int popsize, int objsize);
     void train(DOC **examples, double *targets, long num_examples);
     double test(DOC **examples, double *targets, long num_examples);
     void parse_command_line(int start, int argc, char *argv[], long *verbosity, LEARN_PARM *learn_parm,

@@ -41,6 +41,7 @@ see https://www.gnu.org/licenses/. */
 
 #include <pagmo/algorithm.hpp>
 #include <pagmo/algorithms/bcemoa.hpp>
+#include <pagmo/algorithms/learner.hpp>
 #include <pagmo/algorithms/machineDM.hpp>
 #include <pagmo/exceptions.hpp>
 #include <pagmo/io.hpp>
@@ -67,14 +68,17 @@ namespace pagmo
  * If \p int_dim is larger than the problem dimension. If the population size is smaller than 5 or not a multiple of
  * 4.
  */
+// bcemoa::bcemoa(svm &ml, unsigned gen1, unsigned geni, int maxInteractions, int n_of_evals, double cr, double eta_c,
+//                double m, double eta_m, unsigned seed)
+//     : {};
 
-population bcemoa::evolve(population &pop) const
+population bcemoa::evolve(population &pop)
 {
     // Call evolve from parent class (NSGA-II) for gen1
-    nsga2::evolve(pop);
+    pop = nsga2::evolve(pop);
     // Call interactive evolve of BCEMOA for geni
     for (int i = 0; i < maxInteractions; i++) {
-        evolvei(pop);
+        pop = evolvei(pop);
     }
     // return evolvei(pop);
 }
@@ -91,21 +95,21 @@ population bcemoa::evolve(population &pop) const
 population bcemoa::evolvei(population &pop)
 {
     // create a population of m randomly selected individuals for training
-    if (ml->dm.mode != 1) {
+    if (ml.mdm.mode != 1) {
         population trainingPop;
         auto fnds_res = fast_non_dominated_sorting(pop.get_f());
-        auto ndf = std::get<0>(fnds_res); // non dominated fronts [[0,3,2],[1,5,6],[4],...]
-        std::vector<double, ndf.size()> index;
-        std::fill(index.begin(), index.end(), 1);
+        auto ndf = std::get<0>(fnds_res);         // non dominated fronts [[0,3,2],[1,5,6],[4],...]
+        std::vector<double> index(ndf.size(), 1); // giving the same weight to all the nondominated solutions
         int j;
-        for (i = 0; i < n_of_evals; i++) {
-            j = roulette_wheel(index);
-            trainingPop.pushback(pop.get_x(j), pop.get_f(j));
-        }
+        std::vector<vector_double> x = pop.get_x();
         std::vector<vector_double> f = pop.get_f();
+        for (int i = 0; i < n_of_evals; i++) {
+            j = ml.mdm.roulette_wheel(index);
+            trainingPop.push_back(x[j], f[j]);
+        }
         // update svm problems
         // train svm MODEL
-        results = train(trainingPop, 0, trainingPop.size(), f[1].size);
+        ml.train(trainingPop, 0, static_cast<int>(trainingPop.size()), (int)(f[1].size()));
         // rank original population by model in the crowding distance calculations
     }
     // We store some useful variables
@@ -118,7 +122,7 @@ population bcemoa::evolvei(population &pop)
     auto fevals0 = prob.get_fevals(); // discount for the fevals already made
     unsigned int count = 1u;          // regulates the screen output
 
-    vector_double w = ml->dm.get_weights(); //(nobj, 1.0 / nobj);
+    vector_double w = ml.mdm.get_weights(); //(nobj, 1.0 / nobj);
     // M: value function is passed to bcemoa already)linear_value_function bcemoa_vf{w};
 
     // PREAMBLE-------------------------------------------------------------------------------------------------
@@ -213,13 +217,13 @@ population bcemoa::evolvei(population &pop)
             for (auto idx : front_idxs) {
 
                 v = pop.get_f()[idx];
-                if (ml->dm.mode == 1) {
+                if (ml.mdm.mode == 1) {
                     // pop_cd[idx] = accumulate(v.begin(), v.end(), 0.0) / v.size();
-                    pop_cd[idx] = dm.value(v);
+                    pop_cd[idx] = ml.mdm.value(v);
                 }
-                if (ml->dm.mode != 1) {
+                if (ml.mdm.mode != 1) {
                     // rank the model by svm;
-                    pop_cd[idx] = ml.preference(v, v.size(), 1);
+                    pop_cd[idx] = ml.preference(v, (int)(v.size()));
                 }
             }
         }
@@ -308,4 +312,5 @@ void bcemoa::serialize(Archive &ar, unsigned x)
 
 } // namespace pagmo
 
-PAGMO_S11N_ALGORITHM_IMPLEMENT(pagmo::bcemoa)
+// M: This line is a problem in all files
+// PAGMO_S11N_ALGORITHM_IMPLEMENT(pagmo::bcemoa)

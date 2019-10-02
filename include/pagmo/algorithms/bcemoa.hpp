@@ -45,7 +45,8 @@ namespace pagmo
  */
 class PAGMO_DLL_PUBLIC bcemoa : public nsga2
 {
-public:
+
+    // public:
     /// Constructor
     /**
      * Constructs the BCEMOA user defined algorithm.
@@ -60,21 +61,18 @@ public:
      * [1,100[ or \p eta_m is not in [1,100[.
      */
     // FIXME: Cannot add empty parameter machineDM dm
-    bcemoa(unsigned gen1 = 1u, unsigned geni = 10u, maxInt = 20, nOfEvals = 5;
-           double cr = 0.95, double eta_c = 10., double m = 0.01, double eta_m = 50., svm &l,
-           unsigned seed = pagmo::random_device::next())
-        : ml(l){}, maxInteractions(maxInt), n_of_evals(nOfEvals);
 
-    svm ml;
-    int maxInteractions;
-    int n_of_evals;
+    bcemoa(svm &ml, unsigned gen1 = 1u, unsigned geni = 10u, int maxInteractions = 20, int n_of_evals = 5,
+           double cr = 0.95, double eta_c = 10., double m = 0.01, double eta_m = 50.,
+           unsigned seed = pagmo::random_device::next())
+        : ml(ml), maxInteractions(maxInteractions), n_of_evals(n_of_evals){};
 
     // Algorithm evolve method
-    population evolve(&population) const;
+    population evolve(population &);
 
     // population evolvedm(machineDM &dm, population);
     // Algorithm evolve based on preference information
-    population evolvei(&population);
+    population evolvei(population &);
 
     // FIXME: Report to pagmo that if we don't duplicate this, we get
     /* bcemoa.o: In function `pagmo::detail::algo_inner<pagmo::bcemoa>::set_seed(unsigned int)':
@@ -100,13 +98,17 @@ undefined reference to `pagmo::bcemoa::set_seed(unsigned int)'
     template <typename Archive>
     void serialize(Archive &, unsigned);
 
-private:
-    //    machineDM m_dm;
+    // private:
+    //    bcemoa
+
     unsigned m_geni;
+    svm ml;
+    int maxInteractions;
+    int n_of_evals;
 };
 
 } // namespace pagmo
-
-PAGMO_S11N_ALGORITHM_EXPORT_KEY(pagmo::bcemoa)
+// M: I noticed it had not been working in machinDM as well. I tried to figure it out and I failed
+// PAGMO_S11N_ALGORITHM_EXPORT_KEY(pagmo::bcemoa : nsga2)
 
 #endif
