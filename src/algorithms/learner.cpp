@@ -15,6 +15,7 @@
 #include <boost/range/combine.hpp>
 
 #include <pagmo/algorithm.hpp>
+#include <pagmo/algorithms/learner.hpp>
 #include <pagmo/exceptions.hpp>
 #include <pagmo/io.hpp>
 #include <pagmo/population.hpp>
@@ -29,6 +30,34 @@
 
 namespace pagmo
 {
+svm::svm(machineDM &dm, int start) // svm(machineDM &dm, int start, int argc, char **argv)
+    : start(start), mdm(dm)        // M: WE may also define svm as a derived class od machineDM so it can access the
+                                   // utility funcionts and etc
+{
+    // parse_command_line(start, argc, argv, &verbosity, &learn_parm, &kernel_parm);
+
+    init();
+}
+svm::~svm()
+{
+    free_model(m_model, 0);
+    free_examples(m_examples, m_num_examples);
+    free(m_targets);
+
+    for (int k = 0; k < m_cv_k; k++) {
+        free_examples(m_train_examples[k], m_num_train_examples[k]);
+        free_examples(m_test_examples[k], m_num_test_examples[k]);
+        if (m_train_targets[k]) free(m_train_targets[k]);
+        if (m_test_targets[k]) free(m_test_targets[k]);
+    }
+
+    free(m_train_examples);
+    free(m_test_examples);
+    free(m_train_targets);
+    free(m_test_targets);
+    free(m_num_train_examples);
+    free(m_num_test_examples);
+}
 void svm::free_examples(DOC **examples, long num_examples)
 {
     if (examples) {
@@ -579,9 +608,9 @@ void svm::parse_command_line(int start, int argc, char *argv[], long *verbosity,
         learn_parm->type = OPTIMIZATION;
         learn_parm->sharedslack = 1;
     } else {
-        printf(
-            "\nUnknown type '%s': Valid types are 'c' (classification), 'r' regession, and 'p' preference ranking.\n",
-            type);
+        printf("\nUnknown type '%s': Valid types are 'c' (classification), 'r' regession, and 'p' preference "
+               "ranking.\n",
+               type);
         wait_any_key();
         print_help();
         exit(0);

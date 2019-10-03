@@ -46,7 +46,7 @@ namespace pagmo
 class PAGMO_DLL_PUBLIC bcemoa : public nsga2
 {
 
-    // public:
+public:
     /// Constructor
     /**
      * Constructs the BCEMOA user defined algorithm.

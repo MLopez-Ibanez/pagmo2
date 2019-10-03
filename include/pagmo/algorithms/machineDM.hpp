@@ -12,7 +12,7 @@
 
 #define NI 1  // No interaction
 #define ITV 2 // Interaction with true value
-#define IMV   // Interaction with modified value
+#define IMV 3 // Interaction with modified value
 
 namespace pagmo
 {
