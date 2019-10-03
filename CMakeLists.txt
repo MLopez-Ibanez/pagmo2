@@ -207,6 +207,7 @@ if(PAGMO_BUILD_PAGMO)
         "${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms/moead.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms/nsga2.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms/bcemoa.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms/learner.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms/machineDM.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms/gaco.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms/de1220.cpp"
