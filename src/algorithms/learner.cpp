@@ -30,6 +30,7 @@
 
 namespace pagmo
 {
+<<<<<<< HEAD
 svm::svm(machineDM &dm, int start) // svm(machineDM &dm, int start, int argc, char **argv)
     : start(start), mdm(dm)        // M: WE may also define svm as a derived class od machineDM so it can access the
                                    // utility funcionts and etc
@@ -38,6 +39,17 @@ svm::svm(machineDM &dm, int start) // svm(machineDM &dm, int start, int argc, ch
 
     init();
 }
+=======
+svm::svm(machineDM dm, int start)
+    : start(start), mdm(dm) // M: WE may also define svm as a derived class od machineDM so it can access the
+                            // utility funcionts and etc
+{
+    parse_command_line(start, argc, argv, &verbosity, &learn_parm, &kernel_parm);
+
+    init();
+};
+
+>>>>>>> 4b874228... changes
 svm::~svm()
 {
     free_model(m_model, 0);
