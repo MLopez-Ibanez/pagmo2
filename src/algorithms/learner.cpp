@@ -16,6 +16,7 @@
 
 #include <pagmo/algorithm.hpp>
 #include <pagmo/algorithms/learner.hpp>
+//#include <pagmo/algorithms/matrix.hpp>
 #include <pagmo/exceptions.hpp>
 #include <pagmo/io.hpp>
 #include <pagmo/population.hpp>
@@ -30,7 +31,6 @@
 
 namespace pagmo
 {
-<<<<<<< HEAD
 svm::svm(machineDM &dm, int start) // svm(machineDM &dm, int start, int argc, char **argv)
     : start(start), mdm(dm)        // M: WE may also define svm as a derived class od machineDM so it can access the
                                    // utility funcionts and etc
@@ -39,17 +39,6 @@ svm::svm(machineDM &dm, int start) // svm(machineDM &dm, int start, int argc, ch
 
     init();
 }
-=======
-svm::svm(machineDM dm, int start)
-    : start(start), mdm(dm) // M: WE may also define svm as a derived class od machineDM so it can access the
-                            // utility funcionts and etc
-{
-    parse_command_line(start, argc, argv, &verbosity, &learn_parm, &kernel_parm);
-
-    init();
-};
-
->>>>>>> 4b874228... changes
 svm::~svm()
 {
     free_model(m_model, 0);
@@ -96,17 +85,17 @@ void svm::init()
 }
 
 // Sets the preference value or comparison values (somehow Non domination value based on preference values)
-void svm::setPreferences(population &pop, int start, int popsize, int objsize,
-                         bool rankerprefs) // M: where is this function used? not useful
-{
-    if (!rankerprefs) // M: if randerprefs is false then setRankingPrefereces? shouldn't it be vice versa?
-        setRankingPreferences(pop, start, popsize, objsize);
-    else
-        for (int i = start; i < popsize; i++) {
-            // compute preference for current individual
-            pop.pref[i] = dm.value(pop.m_f[i]);
-        };
-}
+// void svm::setPreferences(population &pop, int start, int popsize, int objsize,
+//                          bool rankerprefs) // M: where is this function used? not useful
+// {
+//     if (!rankerprefs) // M: if randerprefs is false then setRankingPrefereces? shouldn't it be vice versa?
+//         setRankingPreferences(pop, start, popsize, objsize);
+//     else
+//         for (int i = start; i < popsize; i++) {
+//             // compute preference for current individual
+//             pop.m_pref[i] = mdm.value(pop.m_f[i]);
+//         };
+// }
 
 // comparing the solutions by DM 2 by 2
 void svm::setRankingPreferences(population &pop, int start, int popsize, int objsize)
@@ -114,15 +103,16 @@ void svm::setRankingPreferences(population &pop, int start, int popsize, int obj
     // init ranking preferences to 0
     for (int i = start; i < popsize; i++) {
         // init preference for current individual
-        pop.pref[i] = 0;
+        pop.m_pref[i] = 0;
     }
     double pref;
+    std::vector<vector_double> f = pop.get_f();
     for (int i = start; i < popsize; i++)
         for (int j = i + 1; j < popsize; j++) {
-            pref = dm.value(pop.m_f[i]) - dm.value(dm.value[j]); // M: instead of userPreference in old files
+            pref = mdm.value(f[i]) - mdm.value(f[j]); // M: instead of userPreference in old files
 
-            if (pref <= 0) pop.pref[i]--;
-            if (pref >= 0) pop.pref[j]--;
+            if (pref <= 0) pop.m_pref[i]--;
+            if (pref >= 0) pop.m_pref[j]--;
         }
 }
 
@@ -160,7 +150,7 @@ double svm::train(pagmo::population &pop, int start, int popsize, int objsize)
     }
 #endif
 
-    cout << "\n\nStarting ranker training\n" << endl;
+    std::cout << "\n\nStarting ranker training\n" << std::endl;
 
     if (m_do_model_selection) {
         // double c = learn_parm.svm_c;
@@ -178,7 +168,7 @@ double svm::train(pagmo::population &pop, int start, int popsize, int objsize)
     // train model
     train(m_examples, m_targets, m_num_examples);
 
-    cout << "\n\nFinished ranker training\n" << endl;
+    std::cout << "\n\nFinished ranker training\n" << std::endl;
 
     // DEBUG
     // write_model("debug.model",m_model);
@@ -253,9 +243,10 @@ double svm::do_cross_validation()
     return (avgperf / m_cv_k);
 }
 
-void svm::updateSvmProblem(DOC ***examples_p, double **targets_p, long *num_examples_p, long qid, population &pop,
-                           int popstart, int popsize, int objsize)
+void svm::updateSvmProblem(DOC ***examples_p, double **targets_p, long *num_examples_p, long qid,
+                           pagmo::population &pop, int popstart, int popsize, int objsize)
 {
+    std::vector<vector_double> f = pop.get_f();
     // update set size
     long exstart = *num_examples_p;
     *num_examples_p += popsize - popstart;
@@ -273,8 +264,8 @@ void svm::updateSvmProblem(DOC ***examples_p, double **targets_p, long *num_exam
         *targets_p = (double *)calloc((*num_examples_p), sizeof(double));
 
     for (int i = popstart, e = exstart; i < popsize; i++, e++) {
-        (*targets_p)[e] = pop.pref[i];
-        (*examples_p)[e] = create_instance(e, pop.m_f[i], objsize, qid + 1);
+        (*targets_p)[e] = pop.m_pref[i];
+        (*examples_p)[e] = create_instance(e, f[i], objsize, qid + 1);
     }
 }
 
@@ -300,7 +291,7 @@ DOC *svm::create_instance(int instnum, vector_double &obj, int objsize, int qid)
 void svm::updateCVProblems(population &pop, int popstart, int popsize, int objsize)
 {
     if (popstart != 0) {
-        cerr << "ERROR: assuming zero popstart" << endl;
+        std::cerr << "ERROR: assuming zero popstart" << std::endl;
         exit(0);
     }
 
@@ -391,15 +382,15 @@ void svm::train(DOC **examples, double *targets, long num_examples)
         /* compute weight vector */
         add_weight_vector_to_linear_model(m_model);
 
-        cout << "learned polynomial:" << endl;
+        std::cout << "learned polynomial:" << std::endl;
         // NOTE: lin_weights contains totwords+1 elements.
         // First element could be bias term b ?
         for (int i = 1; i <= m_model->totwords; i++) {
-            if (i > 1) cout << " + ";
-            cout << m_model->lin_weights[i];
-            cout << " * x" << i - 1;
+            if (i > 1) std::cout << " + ";
+            std::cout << m_model->lin_weights[i];
+            std::cout << " * x" << i - 1;
         }
-        cout << endl;
+        std::cout << std::endl;
     }
 }
 
@@ -409,11 +400,8 @@ double svm::test(DOC **examples, double *targets, long num_examples)
 
     if (num_examples <= 1) return 1.;
 
-    Matrix<double> preds(num_examples, 1);
-    Matrix<double> positions(num_examples, 1);
-    vector<int> preds_sort(num_examples);
-    vector<int> positions_sort(num_examples);
-
+    vector_double preds(num_examples);
+    vector_double positions(num_examples);
     for (long i = 0; i < num_examples; i++) {
 
         if (m_model->kernel_parm.kernel_type == 0) /* linear kernel */
@@ -421,16 +409,74 @@ double svm::test(DOC **examples, double *targets, long num_examples)
         else
             l = classify_example(m_model, examples[i]);
 
-        preds(i, 0) = l;
-        positions(i, 0) = targets[i];
+        preds[i] = l;
+        positions[i] = targets[i];
     }
 
-    preds.Sort(preds_sort);
-    positions.Sort(positions_sort);
+    std::vector<int> preds_sort = sort(preds);
+    std::vector<int> positions_sort = sort(positions);
 
-    return corrcoeff(preds_sort, positions_sort);
+    return corrcoeff(
+        preds_sort,
+        positions_sort); // M: I believe this is the correlation coefficient. thus I wrote a function to calculate this.
 }
 
+// sort function get a vector, sorts it in an increasing order and returns the indexes of the original vector in the
+// incrasing order
+std::vector<int>
+svm::sort(vector_double
+              &x) // M: I need to move these kinds of functions to a utilitiy header. like reoulette wheel selection.
+
+{
+    int s = x.size();
+    std::vector<int> order(s);
+    for (int r = 0; r < s; r++)
+        order[r] = r;
+
+    for (int pass = 0; pass < s; pass++)
+        for (int r = 0; r < s; r++)
+            if (x[r] < x[r + 1]) {
+                double hold = x[r];
+                x[r] = x[r + 1];
+                x[r + 1] = hold;
+                int pos = order[r];
+                order[r] = order[r + 1];
+                order[r + 1] = pos;
+            }
+    return order;
+}
+
+double svm::corrcoeff(const std::vector<int> &X, const std::vector<int> &Y)
+{
+    int sum_X = 0, sum_Y = 0, sum_XY = 0;
+    int squareSum_X = 0, squareSum_Y = 0;
+    int n = X.size();
+    for (int i = 0; i < n; i++) {
+        // sum of elements of array X.
+        sum_X = sum_X + X[i];
+
+        // sum of elements of array Y.
+        sum_Y = sum_Y + Y[i];
+
+        // sum of X[i] * Y[i].
+        sum_XY = sum_XY + X[i] * Y[i];
+
+        // sum of square of array elements.
+        squareSum_X = squareSum_X + X[i] * X[i];
+        squareSum_Y = squareSum_Y + Y[i] * Y[i];
+    }
+
+    // use formula for calculating correlation coefficient.
+    double corr = (double)(n * sum_XY - sum_X * sum_Y)
+                  / sqrt((n * squareSum_X - sum_X * sum_X) * (n * squareSum_Y - sum_Y * sum_Y));
+
+    return corr;
+}
+void wait_any_key()
+{
+    printf("\n(more)\n");
+    (void)getc(stdin);
+}
 void svm::parse_command_line(int start, int argc, char *argv[], long *verbosity, LEARN_PARM *learn_parm,
                              KERNEL_PARM *kernel_parm)
 {
@@ -700,70 +746,7 @@ void svm::parse_command_line(int start, int argc, char *argv[], long *verbosity,
     }
 }
 
-void PreferenceRanker::print_help()
-{
-    Ranker::print_help();
-
-    printf("\n preference-model options (modified from SVM-light %s):\n\n", VERSION);
-    printf("Learning options:\n");
-    printf("         -c float    -> C: trade-off between training error\n");
-    printf("                        and margin (default=100)\n");
-    printf("Kernel options:\n");
-    printf("         -t int      -> type of kernel function:\n");
-    printf("                        0: linear (default)\n");
-    printf("                        1: polynomial (s a*b+c)^d\n");
-    printf("                        2: radial basis function exp(-gamma ||a-b||^2)\n");
-    printf("                        3: sigmoid tanh(s a*b + c)\n");
-    printf("                        4: user defined kernel from kernel.h\n");
-    printf("         -d int      -> parameter d in polynomial kernel\n");
-    printf("         -g float    -> parameter gamma in rbf kernel\n");
-    printf("         -s float    -> parameter s in sigmoid/poly kernel\n");
-    printf("         -r float    -> parameter c in sigmoid/poly kernel\n");
-    printf("         -u string   -> parameter of user defined kernel\n");
-    printf("Optimization options (see [1]):\n");
-    printf("         -q [2..]    -> maximum size of QP-subproblems (default 10)\n");
-    printf("         -n [2..q]   -> number of new variables entering the working set\n");
-    printf("                        in each iteration (default n = q). Set n<q to prevent\n");
-    printf("                        zig-zagging.\n");
-    printf("         -m [5..]    -> size of cache for kernel evaluations in MB (default 40)\n");
-    printf("                        The larger the faster...\n");
-    printf("         -e float    -> eps: Allow that error for termination criterion\n");
-    printf("                        [y [w*x+b] - 1] >= eps (default 0.001)\n");
-    printf("         -y [0,1]    -> restart the optimization from alpha values in file\n");
-    printf("                        specified by -a option. (default 0)\n");
-    printf("         -h [5..]    -> number of iterations a variable needs to be\n");
-    printf("                        optimal before considered for shrinking (default 100)\n");
-    printf("         -f [0,1]    -> do final optimality check for variables removed\n");
-    printf("                        by shrinking. Although this test is usually \n");
-    printf("                        positive, there is no guarantee that the optimum\n");
-    printf("                        was found if the test is omitted. (default 1)\n");
-    printf("         -y string   -> if option is given, reads alphas from file with given\n");
-    printf("                        and uses them as starting point. (default 'disabled')\n");
-    printf("         -# int      -> terminate optimization, if no progress after this\n");
-    printf("                        number of iterations. (default 100000)\n");
-    printf("Model selection options:\n");
-    printf("         -V int      -> n-fold cross validation (default=3)\n");
-    printf("         -M          -> do model selection (default=true)\n");
-
-    wait_any_key();
-    printf("\nMore details in:\n");
-    printf("[1] T. Joachims, Making Large-Scale SVM Learning Practical. Advances in\n");
-    printf("    Kernel Methods - Support Vector Learning, B. Schölkopf and C. Burges and\n");
-    printf("    A. Smola (ed.), MIT Press, 1999.\n");
-    printf("[2] T. Joachims, Estimating the Generalization performance of an SVM\n");
-    printf("    Efficiently. International Conference on Machine Learning (ICML), 2000.\n");
-    printf("[3] T. Joachims, Transductive Inference for Text Classification using Support\n");
-    printf("    Vector Machines. International Conference on Machine Learning (ICML),\n");
-    printf("    1999.\n");
-    printf("[4] K. Morik, P. Brockhausen, and T. Joachims, Combining statistical learning\n");
-    printf("    with a knowledge-based approach - A case study in intensive care  \n");
-    printf("    monitoring. International Conference on Machine Learning (ICML), 1999.\n");
-    printf("[5] T. Joachims, Learning to Classify Text Using Support Vector\n");
-    printf("    Machines: Methods, Theory, and Algorithms. Dissertation, Kluwer,\n");
-    printf("    2002.\n\n");
-}
-
-void write_examples(ostream &out, DOC **examples, double *targets, long num_examples)
+void svm::write_examples(std::ostream &out, DOC **examples, double *targets, long num_examples)
 {
     for (long i = 0; i < num_examples; i++) {
         out << targets[i] << " qid:" << examples[i]->queryid;
@@ -772,9 +755,9 @@ void write_examples(ostream &out, DOC **examples, double *targets, long num_exam
                 out << " " << (v->words[j]).wnum << ":" << (v->words[j]).weight;
             }
             if (v->userdefined)
-                out << " #" << v->userdefined << endl;
+                out << " #" << v->userdefined << std::endl;
             else
-                out << " #" << endl;
+                out << " #" << std::endl;
         }
     }
 }

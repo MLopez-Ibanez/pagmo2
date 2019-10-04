@@ -354,6 +354,10 @@ public:
 private:
     void clear();
 
+public:
+    // Desirability/Preference
+    vector_double m_pref;
+
 private:
     // Problem.
     problem m_prob;
@@ -363,8 +367,7 @@ private:
     std::vector<vector_double> m_x;
     // Fitness vectors.
     std::vector<vector_double> m_f;
-    // Desirability/Preference
-    vector_double m_pref;
+
     // The Champion chromosome
     vector_double m_champion_x;
     // The Champion fitness
