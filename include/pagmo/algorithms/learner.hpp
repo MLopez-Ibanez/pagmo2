@@ -61,7 +61,7 @@ public:
     int m_curr_iteration;
     // void setPreferences(population &pop, int start, int popsize, int objsize, bool rankerprefs);
     double preference(vector_double &obj, int objsize); //, bool rankerprefs
-    static void print_help();
+    void print_help();
     double train(pagmo::population &pop, int start, int popsize, int objsize);
     int start;
     // protected:

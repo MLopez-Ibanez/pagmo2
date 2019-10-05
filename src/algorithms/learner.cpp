@@ -32,7 +32,7 @@
 namespace pagmo
 {
 svm::svm(machineDM &dm, int start) // svm(machineDM &dm, int start, int argc, char **argv)
-    : start(start), mdm(dm)        // M: WE may also define svm as a derived class od machineDM so it can access the
+    : mdm(dm), start(start)        // M: WE may also define svm as a derived class od machineDM so it can access the
                                    // utility funcionts and etc
 {
     // parse_command_line(start, argc, argv, &verbosity, &learn_parm, &kernel_parm);
@@ -472,7 +472,7 @@ double svm::corrcoeff(const std::vector<int> &X, const std::vector<int> &Y)
 
     return corr;
 }
-void wait_any_key()
+void svm::wait_any_key()
 {
     printf("\n(more)\n");
     (void)getc(stdin);
@@ -762,7 +762,7 @@ void svm::write_examples(std::ostream &out, DOC **examples, double *targets, lon
     }
 }
 
-void copy_learn_parm(LEARN_PARM *src_learn_parm, LEARN_PARM *dst_learn_parm)
+void svm::copy_learn_parm(LEARN_PARM *src_learn_parm, LEARN_PARM *dst_learn_parm)
 {
     strcpy(dst_learn_parm->predfile, src_learn_parm->predfile);
     strcpy(dst_learn_parm->alphafile, src_learn_parm->predfile);
@@ -788,6 +788,67 @@ void copy_learn_parm(LEARN_PARM *src_learn_parm, LEARN_PARM *dst_learn_parm)
     dst_learn_parm->compute_loo = src_learn_parm->compute_loo;
     dst_learn_parm->rho = src_learn_parm->rho;
     dst_learn_parm->xa_depth = src_learn_parm->xa_depth;
+}
+void svm::print_help()
+{
+
+    printf("\n preference-model options (modified from SVM-light %s):\n\n", VERSION);
+    printf("Learning options:\n");
+    printf("         -c float    -> C: trade-off between training error\n");
+    printf("                        and margin (default=100)\n");
+    printf("Kernel options:\n");
+    printf("         -t int      -> type of kernel function:\n");
+    printf("                        0: linear (default)\n");
+    printf("                        1: polynomial (s a*b+c)^d\n");
+    printf("                        2: radial basis function exp(-gamma ||a-b||^2)\n");
+    printf("                        3: sigmoid tanh(s a*b + c)\n");
+    printf("                        4: user defined kernel from kernel.h\n");
+    printf("         -d int      -> parameter d in polynomial kernel\n");
+    printf("         -g float    -> parameter gamma in rbf kernel\n");
+    printf("         -s float    -> parameter s in sigmoid/poly kernel\n");
+    printf("         -r float    -> parameter c in sigmoid/poly kernel\n");
+    printf("         -u string   -> parameter of user defined kernel\n");
+    printf("Optimization options (see [1]):\n");
+    printf("         -q [2..]    -> maximum size of QP-subproblems (default 10)\n");
+    printf("         -n [2..q]   -> number of new variables entering the working set\n");
+    printf("                        in each iteration (default n = q). Set n<q to prevent\n");
+    printf("                        zig-zagging.\n");
+    printf("         -m [5..]    -> size of cache for kernel evaluations in MB (default 40)\n");
+    printf("                        The larger the faster...\n");
+    printf("         -e float    -> eps: Allow that error for termination criterion\n");
+    printf("                        [y [w*x+b] - 1] >= eps (default 0.001)\n");
+    printf("         -y [0,1]    -> restart the optimization from alpha values in file\n");
+    printf("                        specified by -a option. (default 0)\n");
+    printf("         -h [5..]    -> number of iterations a variable needs to be\n");
+    printf("                        optimal before considered for shrinking (default 100)\n");
+    printf("         -f [0,1]    -> do final optimality check for variables removed\n");
+    printf("                        by shrinking. Although this test is usually \n");
+    printf("                        positive, there is no guarantee that the optimum\n");
+    printf("                        was found if the test is omitted. (default 1)\n");
+    printf("         -y string   -> if option is given, reads alphas from file with given\n");
+    printf("                        and uses them as starting point. (default 'disabled')\n");
+    printf("         -# int      -> terminate optimization, if no progress after this\n");
+    printf("                        number of iterations. (default 100000)\n");
+    printf("Model selection options:\n");
+    printf("         -V int      -> n-fold cross validation (default=3)\n");
+    printf("         -M          -> do model selection (default=true)\n");
+
+    this->wait_any_key();
+    printf("\nMore details in:\n");
+    printf("[1] T. Joachims, Making Large-Scale SVM Learning Practical. Advances in\n");
+    printf("    Kernel Methods - Support Vector Learning, B. Schölkopf and C. Burges and\n");
+    printf("    A. Smola (ed.), MIT Press, 1999.\n");
+    printf("[2] T. Joachims, Estimating the Generalization performance of an SVM\n");
+    printf("    Efficiently. International Conference on Machine Learning (ICML), 2000.\n");
+    printf("[3] T. Joachims, Transductive Inference for Text Classification using Support\n");
+    printf("    Vector Machines. International Conference on Machine Learning (ICML),\n");
+    printf("    1999.\n");
+    printf("[4] K. Morik, P. Brockhausen, and T. Joachims, Combining statistical learning\n");
+    printf("    with a knowledge-based approach - A case study in intensive care  \n");
+    printf("    monitoring. International Conference on Machine Learning (ICML), 1999.\n");
+    printf("[5] T. Joachims, Learning to Classify Text Using Support Vector\n");
+    printf("    Machines: Methods, Theory, and Algorithms. Dissertation, Kluwer,\n");
+    printf("    2002.\n\n");
 }
 
 } // namespace pagmo
