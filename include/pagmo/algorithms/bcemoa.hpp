@@ -64,8 +64,7 @@ public:
 
     bcemoa(svm &ml, unsigned gen1 = 1u, unsigned geni = 10u, int maxInteractions = 20, int n_of_evals = 5,
            double cr = 0.95, double eta_c = 10., double m = 0.01, double eta_m = 50.,
-           unsigned seed = pagmo::random_device::next())
-        : ml(ml), maxInteractions(maxInteractions), n_of_evals(n_of_evals){};
+           unsigned seed = pagmo::random_device::next());
 
     // Algorithm evolve method
     population evolve(population &);

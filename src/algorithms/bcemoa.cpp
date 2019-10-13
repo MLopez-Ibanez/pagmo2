@@ -71,7 +71,10 @@ namespace pagmo
 // bcemoa::bcemoa(svm &ml, unsigned gen1, unsigned geni, int maxInteractions, int n_of_evals, double cr, double eta_c,
 //                double m, double eta_m, unsigned seed)
 //     : {};
-
+bcemoa::bcemoa(svm &ml, unsigned gen1, unsigned geni, int maxInteractions, int n_of_evals, double cr, double eta_c,
+               double m, double eta_m, unsigned seed)
+    : ml(ml), maxInteractions(maxInteractions), n_of_evals(n_of_evals), m_geni(geni),
+      nsga2(gen1, cr, eta_c, m, eta_m, seed){};
 population bcemoa::evolve(population &pop)
 {
     // Call evolve from parent class (NSGA-II) for gen1
@@ -217,9 +220,11 @@ population bcemoa::evolvei(population &pop)
             for (auto idx : front_idxs) {
 
                 v = pop.get_f()[idx];
+                vector_double solution = pop.get_x()[idx];
+
                 if (ml.mdm.mode == 1) {
                     // pop_cd[idx] = accumulate(v.begin(), v.end(), 0.0) / v.size();
-                    pop_cd[idx] = ml.mdm.value(v);
+                    pop_cd[idx] = ml.mdm.value(solution);
                 }
                 if (ml.mdm.mode != 1) {
                     // rank the model by svm;

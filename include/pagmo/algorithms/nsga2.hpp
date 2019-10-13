@@ -173,7 +173,7 @@ public:
     void serialize(Archive &ar, unsigned)
     {
         detail::archive(ar, m_gen, m_cr, m_eta_c, m_m, m_eta_m, m_e, m_seed, m_verbosity, m_log);
-    };
+    }
     
 protected:
     PAGMO_DLL_LOCAL vector_double::size_type
