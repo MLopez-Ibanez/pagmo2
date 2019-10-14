@@ -67,7 +67,7 @@ public:
            unsigned seed = pagmo::random_device::next());
 
     // Algorithm evolve method
-    population evolve(population &);
+    population bc_evolve(population &);
 
     // population evolvedm(machineDM &dm, population);
     // Algorithm evolve based on preference information
