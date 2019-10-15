@@ -68,7 +68,7 @@ public:
      * [1,100[ or \p eta_m is not in [1,100[.
      */
     tdea(unsigned gen = 1u, double cr = 0.95, double eta_c = 10., double m = 0.01, double eta_m = 50.,
-         unsigned seed = pagmo::random_device::next());
+         double tau = 0.005, unsigned seed = pagmo::random_device::next());
 
     // Algorithm evolve method
     population evolve(population) const;
@@ -166,10 +166,8 @@ public:
     }
 
 protected:
-    PAGMO_DLL_LOCAL vector_double::size_type
-    tournament_selection(vector_double::size_type idx1, vector_double::size_type idx2,
-                         const std::vector<vector_double::size_type> &non_domination_rank,
-                         std::vector<double> &crowding_d) const;
+    // PAGMO_DLL_LOCAL vector_double::size_type tournament_selection(vector_double::size_type idx1,
+    // vector_double::size_type idx2) const;
     PAGMO_DLL_LOCAL void crossover(vector_double &child1, vector_double &child2, vector_double parent1_idx,
                                    vector_double parent2_idx, const pagmo::population &pop) const;
     PAGMO_DLL_LOCAL void mutate(vector_double &child, const pagmo::population &pop) const;
@@ -179,6 +177,7 @@ protected:
     double m_eta_c;
     double m_m;
     double m_eta_m;
+    double m_tau;
     mutable detail::random_engine_type m_e;
     unsigned m_seed;
     unsigned m_verbosity;

@@ -26,8 +26,8 @@
 namespace pagmo
 {
 
-tdea::tdea(unsigned gen, double cr, double eta_c, double m, double eta_m, unsigned seed)
-    : m_gen(gen), m_cr(cr), m_eta_c(eta_c), m_m(m), m_eta_m(eta_m), m_e(seed), m_seed(seed), m_verbosity(0u)
+tdea::tdea(unsigned gen, double cr, double eta_c, double m, double eta_m, double tau, unsigned seed)
+    : m_gen(gen), m_cr(cr), m_eta_c(eta_c), m_m(m), m_eta_m(eta_m), m_e(seed), m_tau(tau), m_seed(seed), m_verbosity(0u)
 {
     if (cr >= 1. || cr < 0.) {
         pagmo_throw(std::invalid_argument, "The crossover probability must be in the [0,1[ range, while a value of "
@@ -101,10 +101,10 @@ population tdea::evolve(population pop) const
     m_log.clear();
 
     // Declarations
-    population archive;
-    best_idx(NP), shuffle1(NP);
-    parent1_idx, parent2_idx;
-    vector_double child1(dim), child2(dim);
+    population archive{prob};
+    std::vector<int> best_idx(NP), shuffle1(NP);
+    int parent1_idx, parent2_idx;
+    vector_double child1(dim), child2(dim), parent1, parent2;
 
     std::iota(shuffle1.begin(), shuffle1.end(), 0u);
 
@@ -152,6 +152,7 @@ population tdea::evolve(population pop) const
 
         // Two individuals are selected randomly from the population; the prioritiy is given to the one that dominates,
         // in none of them dominate oother one of them is selected randomly
+
         if (pareto_dominance(obf[shuffle1[0]], obf[shuffle1[1]])) {
             parent1_idx = shuffle1[0];
         } else if (pareto_dominance(obf[shuffle1[1]], obf[shuffle1[0]]) || ((double)rand() / (RAND_MAX)) > 0.5) {
@@ -159,19 +160,19 @@ population tdea::evolve(population pop) const
         } else {
             parent1_idx = shuffle1[0];
         }
-        vector_double parent1 = pop.get_x()[parent1_idx];
+        parent1 = pop.get_x()[parent1_idx];
 
         // parent 2 is selected randomly from Archive, if Archiive is emmpy one individual is randomly selected from the
         // population
         if (archive.size() < 2) {
-            vector_double parent2 = pop.get_x()[pshuffle1[2]];
+            parent2 = pop.get_x()[shuffle1[2]];
         } else {
             // Second shuffle has the size of archive
-            vector_double::size_type shuffle2(archive.size());
+            std::vector<int> shuffle2(archive.size());
             std::iota(shuffle2.begin(), shuffle2.end(), 0u); // M: This line may be deleted
             std::shuffle(shuffle2.begin(), shuffle2.end(), m_e);
             parent2_idx = shuffle2[1];
-            vector_double parent2 = archive.get_x()[parent2_idx];
+            parent2 = archive.get_x()[parent2_idx];
         }
 
         crossover(child1, child2, parent1, parent2, pop);
@@ -182,16 +183,16 @@ population tdea::evolve(population pop) const
         dominated = false;
         std::vector<int> dominated_list;
 
-        vector_double child_obf = fitness(child1);
+        vector_double child_obf = prob.fitness(child1);
 
-        for (int i = 0; i < NP, i++) {
+        for (int i = 0; i < NP; i++) {
             if (pareto_dominance(obf[i], child_obf)) {
                 dominated = true;
                 break;
             }
         }
         if (dominated == true) continue;
-        for (int i = 0; i < NP, i++) {
+        for (int i = 0; i < NP; i++) {
             if (pareto_dominance(child_obf, obf[i])) {
                 dominated_list.push_back(i);
             }
@@ -206,9 +207,13 @@ population tdea::evolve(population pop) const
         }
 
         // inserting child into Archive
+        if (archive.size() < 2) {
+            archive.push_back(child1, child_obf);
+            continue;
+        }
         obf = archive.get_f();
         dominated = false;
-        for (int i = 0; i < obf.size(), i++) {
+        for (int i = 0; i < obf.size(); i++) {
             if (pareto_dominance(obf[i], child_obf)) {
                 dominated = true;
                 break;
@@ -217,7 +222,7 @@ population tdea::evolve(population pop) const
         if (dominated == true) continue;
 
         // calculating the rectilinear distance of child to each individual in archive
-        double dc, min_dc = DBL_MAX;
+        double dc, min_dc = std::numeric_limits<double>::max();
         int argmin;
         std::vector<vector_double> archive_x = archive.get_x();
         for (int i = 0; i < archive.size(); i++) {
@@ -234,18 +239,18 @@ population tdea::evolve(population pop) const
         // Finding the maximum scaled absolute objective difference between child and archive[i]
         double max_dis = 0;
         for (int j = 0; j < nx; j++) {
-            if (archive_x[argmin][j] - child1[j] > tau) {
+            if (archive_x[argmin][j] - child1[j] > m_tau) {
                 archive.push_back(child1, child_obf);
             }
         }
 
         // This method returns the sorted N best individuals in the population according to the crowded comparison
         // operator
-        best_idx = select_best_N_mo(archive.get_f(), NP);
-        // We insert into the population
-        for (population::size_type i = 0; i < NP; ++i) {
-            pop.set_xf(i, archive.get_x()[best_idx[i]], archive.get_f()[best_idx[i]]);
-        }
+        // best_idx = select_best_N_mo(archive.get_f(), NP);
+        // // We insert into the population
+        // for (population::size_type i = 0; i < NP; ++i) {
+        //     pop.set_xf(i, archive.get_x()[best_idx[i]], archive.get_f()[best_idx[i]]);
+        // }
     } // end of main NSGAII loop
     return archive;
 }
@@ -278,16 +283,17 @@ std::string tdea::get_extra_info() const
     stream(ss, "\n\tVerbosity: ", m_verbosity);
     return ss.str();
 }
-
-vector_double::size_type tdea::tournament_selection(vector_double::size_type idx1, vector_double::size_type idx2) const
-{
-    if (non_domination_rank[idx1] < non_domination_rank[idx2]) return idx1;
-    if (non_domination_rank[idx1] > non_domination_rank[idx2]) return idx2;
-    if (crowding_d[idx1] > crowding_d[idx2]) return idx1;
-    if (crowding_d[idx1] < crowding_d[idx2]) return idx2;
-    std::uniform_real_distribution<> drng(0., 1.); // to generate a number in [0, 1)
-    return ((drng(m_e) > 0.5) ? idx1 : idx2);
-}
+//
+// vector_double::size_type tdea::tournament_selection(vector_double::size_type idx1, vector_double::size_type idx2)
+// const
+// {
+//     if (pareto_dominance(idx1,idx2)) return idx1;
+//     if (non_domination_rank[idx1] > non_domination_rank[idx2]) return idx2;
+//     if (crowding_d[idx1] > crowding_d[idx2]) return idx1;
+//     if (crowding_d[idx1] < crowding_d[idx2]) return idx2;
+//     std::uniform_real_distribution<> drng(0., 1.); // to generate a number in [0, 1)
+//     return ((drng(m_e) > 0.5) ? idx1 : idx2);
+// }
 
 void tdea::crossover(vector_double &child1, vector_double &child2, vector_double parent1, vector_double parent2,
                      const pagmo::population &pop) const
