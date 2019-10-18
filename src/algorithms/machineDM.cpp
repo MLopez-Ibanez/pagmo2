@@ -98,6 +98,9 @@ vector_double machineDM::get_weights()
 // probabilities constructed based on the values of the passed vector
 int machineDM::roulette_wheel(vector_double &v)
 {
+    // Random distributions
+    std::uniform_real_distribution<> drng(0., 1.); // to generate a number in [0, 1)
+
     double sum = 0.;
     double rndNumber;
     int i;
@@ -234,6 +237,7 @@ double machineDM::Rand_normal(double mean, double sd)
 
 vector_double machineDM::fitness(vector_double solution)
 {
+    assert(prob.get_nx() == solution.size());
     // FIXME: Apply biases
     vector_double f = prob.fitness(solution);
 
@@ -252,6 +256,7 @@ double machineDM::value(vector_double solution)
 
 double machineDM::true_value(const vector_double &solution) const
 {
+    assert(prob.get_nx() == solution.size());
     vector_double f = prob.fitness(solution);
     return pref.value(f);
 }

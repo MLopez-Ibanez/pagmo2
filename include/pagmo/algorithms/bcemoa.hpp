@@ -79,7 +79,7 @@ bcemoa.cpp:(.text._ZN5pagmo6detail10algo_innerINS_6bcemoaEE8set_seedEj[_ZN5pagmo
 undefined reference to `pagmo::bcemoa::set_seed(unsigned int)'
     */
     // Sets the seed
-    void set_seed(unsigned);
+//    void set_seed(unsigned);
 
     /// Algorithm name
     /**
