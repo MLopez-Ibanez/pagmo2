@@ -21,7 +21,7 @@ namespace pagmo
 class PAGMO_DLL_PUBLIC svm
 {
 public:
-    svm(machineDM &dm, int start); // svm(machineDM &dm, int start, int argc, char **argv)
+    svm(machineDM &dm, int start = 0, int cv_k = 0); // svm(machineDM &dm, int start, int argc, char **argv)
     //     : start(start), mdm(dm)   // M: WE may also define svm as a derived class od machineDM so it can access the
     //                               // utility funcionts and etc
     // {
@@ -67,7 +67,7 @@ public:
     // protected:
 
     void free_examples(DOC **examples, long num_examples); // Deletes the training examples
-    void init();
+    // void init();
     void setRankingPreferences(population &pop, int start, int popsize, int objsize);
 
     double do_model_selection();

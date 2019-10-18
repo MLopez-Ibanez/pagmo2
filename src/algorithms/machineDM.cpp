@@ -230,7 +230,7 @@ double machineDM::Rand_normal(double mean, double sd)
     return (mean + sd * (x - 6.0));
 }
 
-vector_double machineDM::fitness(const vector_double &solution) const
+vector_double machineDM::fitness(vector_double solution)
 {
     // FIXME: Apply biases
     vector_double f = prob.fitness(solution);
@@ -238,7 +238,7 @@ vector_double machineDM::fitness(const vector_double &solution) const
     return f;
 }
 
-double machineDM::value(const vector_double &solution)
+double machineDM::value(vector_double solution)
 {
     vector_double f = fitness(solution);
     // FIXME: Apply biases

@@ -35,8 +35,7 @@ protected:
 //                  const vector_double &lambda, const vector_double &tau) const;
 // };
 
-class PAGMO_DLL_PUBLIC linear_value_function
-    : public value_function // Mahdi: The value function is protected, why we have public here?
+class PAGMO_DLL_PUBLIC linear_value_function : public value_function
 {
 public:
     linear_value_function(std::vector<double> w) : value_function(w){};
@@ -63,16 +62,17 @@ public:
         if (str == "") {
             std::cout << "No function is defined\n";
         }
-        int strSize = str.size();
+        size_t strSize = str.size();
         std::cout << "Enter total number of objectives/criteria\n";
         std::cout << "\nEnter: ";
         std::cin >> obfs;
 
         //	How many monomials has the polynomial?
         int k = 1;
-        for (int i = 1; i < strSize; ++i)
+        size_t i, j;
+        for (i = 1; i < strSize; ++i)
             if (str[i] == '+' || str[i] == '-') k++;
-        int monoms = k;
+        size_t monoms = k;
 
         //	Signs "+" are necessary for the string parsing
         if (isdigit(str[0])) str.insert(0, "+");
@@ -82,21 +82,21 @@ public:
 
         //	Extracting the monomials as monomStr
         k = 0;
-        int j = 0;
+        j = 0;
         std::string monomStr[monoms];
-        for (int i = 1; i < strSize; ++i)
+        for (i = 1; i < strSize; ++i)
             if (str[i] == '+' || str[i] == '-') {
                 monomStr[k++] = str.substr(j, i - j);
                 j = i;
             }
 
         //  Monomials' formatting i.e. to have all the same form: coefficientX^exponent
-        for (int i = 0; i < monoms; ++i) {
+        for (i = 0; i < monoms; ++i) {
             if (monomStr[i][1] == 'x')      // x is after the +/- sign
                 monomStr[i].insert(1, "1"); //& gets 1 as coefficient
             bool flag = false;              // assuming that x is not present
             int len = monomStr[i].size();
-            for (int j = 1; j < len; ++j)
+            for (j = 1; j < len; ++j)
                 if (monomStr[i][j] == 'x') // but we test this
                 {
                     flag = true;                  //& if x is present
@@ -112,13 +112,13 @@ public:
         weights.resize(monoms, 1); // we have monoms weights
 
         // extraction of weights
-        for (int i = 0; i < monoms; i++) {
+        for (i = 0; i < monoms; i++) {
             if (monomStr[i].find('x')
                 == std::string::npos) { // because of some errors I had to replace string::npos with -1;
                 weights[i] = stoi(monomStr[i]);
                 continue;
             }
-            for (int j = 0; j < monomStr[i].size(); i++) {
+            for (j = 0; j < monomStr[i].size(); i++) {
                 if (monomStr[i][j] == 'x' || monomStr[i][j] == 'X') {
                     if (j == 1) {
                         break;
@@ -207,7 +207,7 @@ public:
      **/
 
     std::vector<vector_double> trainFile;
-    vector_double fitness(const vector_double &) const;
+    vector_double fitness(vector_double);
 
     vector_double get_weights();
     /* Select a subset of q criteria from m true criteria with probability
@@ -226,7 +226,7 @@ public:
      *
      *
      **/
-    double value(const vector_double &);
+    double value(vector_double);
 
     /**
      * True solution value according to DM's preference function.
@@ -241,9 +241,9 @@ public:
     vector_double alpha, beta, lambda;
     double gamma, sigma, delta;
     int q;
-    unsigned mode;
-    value_function &pref;
     problem &prob;
+    value_function &pref;
+    unsigned mode;
 };
 
 } // namespace pagmo

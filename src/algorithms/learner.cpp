@@ -31,45 +31,12 @@
 
 namespace pagmo
 {
-svm::svm(machineDM &dm, int start) // svm(machineDM &dm, int start, int argc, char **argv)
-    : mdm(dm), start(start)        // M: WE may also define svm as a derived class od machineDM so it can access the
-                                   // utility funcionts and etc
+svm::svm(machineDM &dm, int start, int cv_k) // svm(machineDM &dm, int start, int argc, char **argv)
+    : mdm(dm), start(start), m_cv_k(cv_k)
+// M: WE may also define svm as a derived class od machineDM so it can access the
+// utility funcionts and etc
 {
     // parse_command_line(start, argc, argv, &verbosity, &learn_parm, &kernel_parm);
-
-    init();
-}
-svm::~svm()
-{
-    free_model(m_model, 0);
-    free_examples(m_examples, m_num_examples);
-    free(m_targets);
-
-    for (int k = 0; k < m_cv_k; k++) {
-        free_examples(m_train_examples[k], m_num_train_examples[k]);
-        free_examples(m_test_examples[k], m_num_test_examples[k]);
-        if (m_train_targets[k]) free(m_train_targets[k]);
-        if (m_test_targets[k]) free(m_test_targets[k]);
-    }
-
-    free(m_train_examples);
-    free(m_test_examples);
-    free(m_train_targets);
-    free(m_test_targets);
-    free(m_num_train_examples);
-    free(m_num_test_examples);
-}
-void svm::free_examples(DOC **examples, long num_examples)
-{
-    if (examples) {
-        for (long i = 0; i < num_examples; i++)
-            free_example(examples[i], 1);
-        free(examples);
-    }
-}
-
-void svm::init()
-{
 
     m_num_examples = 0;
     m_max_feature_id = 0;
@@ -83,6 +50,37 @@ void svm::init()
     m_num_train_examples = (long *)calloc(m_cv_k, sizeof(long));
     m_num_test_examples = (long *)calloc(m_cv_k, sizeof(long));
 }
+svm::~svm()
+{
+    if (m_model) free_model(m_model, 0);
+    free_examples(m_examples, m_num_examples);
+    if (m_targets) free(m_targets);
+
+    for (int k = 0; k < m_cv_k; k++) {
+        free_examples(m_train_examples[k], m_num_train_examples[k]);
+        free_examples(m_test_examples[k], m_num_test_examples[k]);
+        if (m_train_targets[k]) free(m_train_targets[k]);
+        if (m_test_targets[k]) free(m_test_targets[k]);
+    }
+    if (m_cv_k > 0) {
+        free(m_train_examples);
+        free(m_test_examples);
+        free(m_train_targets);
+        free(m_test_targets);
+        free(m_num_train_examples);
+        free(m_num_test_examples);
+    }
+}
+void svm::free_examples(DOC **examples, long num_examples)
+{
+    if (examples) {
+        for (long i = 0; i < num_examples; i++)
+            free_example(examples[i], 1);
+        free(examples);
+    }
+}
+
+// void svm::init() {}
 
 // Sets the preference value or comparison values (somehow Non domination value based on preference values)
 // void svm::setPreferences(population &pop, int start, int popsize, int objsize,

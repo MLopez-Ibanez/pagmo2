@@ -67,11 +67,11 @@ public:
            unsigned seed = pagmo::random_device::next());
 
     // Algorithm evolve method
-    population bc_evolve(population &);
+    population bc_evolve(population pop);
 
     // population evolvedm(machineDM &dm, population);
     // Algorithm evolve based on preference information
-    population evolvei(population &);
+    population evolvei(population);
 
     // FIXME: Report to pagmo that if we don't duplicate this, we get
     /* bcemoa.o: In function `pagmo::detail::algo_inner<pagmo::bcemoa>::set_seed(unsigned int)':
