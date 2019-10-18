@@ -39,6 +39,7 @@ double linear_value_function::value(const std::vector<double> &obj) const
          std::cout << '(' << ti << ',' << tv << ')' << '\n';
          }
     */
+    assert(this->weights.size() == obj.size());
     double w, o;
     BOOST_FOREACH (boost::tie(w, o), boost::combine(this->weights, obj)) {
         value += w * o;
