@@ -46,6 +46,7 @@ double linear_value_function::value(const std::vector<double> &obj) const
     }
     return value;
 }
+
 double quadratic_value_function::value(const std::vector<double> &obj) const
 {
     double value = 0.;
