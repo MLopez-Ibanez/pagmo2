@@ -79,7 +79,7 @@ include(YACMACompilerLinkerSettings)
 include(YACMAThreadingSetup)
 
 # Assemble the flags.
-set(PAGMO_CXX_FLAGS_DEBUG ${YACMA_CXX_FLAGS} "-g3 -Og" ${YACMA_THREADING_CXX_FLAGS})
+set(PAGMO_CXX_FLAGS_DEBUG ${YACMA_CXX_FLAGS} -g3 -Og ${YACMA_THREADING_CXX_FLAGS})
 set(PAGMO_CXX_FLAGS_RELEASE ${YACMA_CXX_FLAGS} ${YACMA_THREADING_CXX_FLAGS})
 if(APPLE AND YACMA_COMPILER_IS_CLANGXX)
   message(STATUS "Clang compiler on OSX detected, setting the standard library to 'libc++'.")
