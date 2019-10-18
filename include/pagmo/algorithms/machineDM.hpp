@@ -198,10 +198,12 @@ public:
      * [1,100[ or \p eta_m is not in [1,100[.
      */
     machineDM(problem &prob, value_function &pref, unsigned mode, unsigned seed = pagmo::random_device::next())
-        : prob(prob), pref(pref), mode(mode) {
-        m_e.seed(seed);
-        m_seed = seed;
-    };
+        : prob(prob), pref(pref), mode(mode),
+        rand_normal(0., sigma * sigma) // to generate a normally distributed number
+        {
+            m_e.seed(seed);
+            m_seed = seed;
+        };
 
     /**
      * Evaluate fitness (objective vector) according to decision maker.
@@ -249,6 +251,7 @@ public:
     unsigned mode;
     mutable detail::random_engine_type m_e;
     unsigned m_seed;
+    std::normal_distribution<double> rand_normal;
 };
 
 } // namespace pagmo

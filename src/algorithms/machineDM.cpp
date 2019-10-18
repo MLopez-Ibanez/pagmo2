@@ -33,13 +33,14 @@ namespace pagmo
 
 double linear_value_function::value(const std::vector<double> &obj) const
 {
+    assert(this->weights.size() == obj.size());
+
     double value = 0.;
     // C++17:
     /*   for(auto const& [ti,tc] : boost::combine(v, l)) {
          std::cout << '(' << ti << ',' << tv << ')' << '\n';
          }
     */
-    assert(this->weights.size() == obj.size());
     double w, o;
     BOOST_FOREACH (boost::tie(w, o), boost::combine(this->weights, obj)) {
         value += w * o;
@@ -49,9 +50,13 @@ double linear_value_function::value(const std::vector<double> &obj) const
 
 double quadratic_value_function::value(const std::vector<double> &obj) const
 {
+    assert(this->weights.size() == obj.size());
+    assert(this->ideal_point.size() == obj.size());
+
     double value = 0.;
     double w, ip, o;
     BOOST_FOREACH (boost::tie(w, ip, o), boost::combine(this->weights, this->ideal_point, obj)) {
+        // FIXME: I think the weight should not be squared
         value += pow(w * (o - ip), 2);
     }
     return value;
@@ -63,34 +68,32 @@ double tchebycheff_value_function::value(const std::vector<double> &obj) const
     double w, ip, o;
     double value = 0.;
     BOOST_FOREACH (boost::tie(w, ip, o), boost::combine(this->weights, this->ideal_point, obj)) {
-        temp = w * std::abs(o - ip);
-        if (temp > value) {
-            value = temp;
-        }
+        temp = std::max(w * std::abs(o - ip), value);
     }
     return value;
 }
 /* Select a subset of q criteria from m true criteria with probability
    proportional to their weights.  */
-std::vector<int> machineDM::select_criteria_subset()
+std::vector<int> machineDM::select_criteria_subset() const 
 {
-    vector_double w = this->pref.weights;
+    const vector_double &w = this->pref.weights;
     std::vector<int> c(w.size());
     double sum = accumulate(w.begin(), w.end(), 0);
     vector_double probs(w.size());
+    assert(sum > 0);
     for (size_t i = 0; i < w.size(); i++) {
         probs[i] = w[i] / sum; // M: instead of ranking the elements based on weights, I directly use weights to
                                // calculate the prob. There is no need to rank them I think
     }
-    int k;
     for (size_t i = 0; i < w.size(); i++) {
-        k = roulette_wheel(probs);
+        // FIXME: Use the m_e random device.
+        int k = roulette_wheel(probs);
         c[i] = k;
         probs[k] = 0.0;
     }
     return c;
 }
-vector_double machineDM::get_weights()
+vector_double machineDM::get_weights() const
 {
     return this->pref.weights;
 }
@@ -115,13 +118,12 @@ int machineDM::roulette_wheel(vector_double &v)
         }
     }
 }
-vector_double machineDM::modify_criteria(
-    vector_double &obf,
-    const std::vector<int> &c) // M: I have assumed that tau in previous vrsion is ideal point. thus I have changed it
+vector_double machineDM::modify_criteria(const vector_double &obj,
+                                         const std::vector<int> &c) // M: I have assumed that tau in previous vrsion is ideal point. thus I have changed it
 {
     assert(gamma >= 0);
     assert(gamma < 1);
-    int m = obf.size();
+    int m = obj.size();
     vector_double ip = this->pref.ideal_point;
     vector_double zhat(m);
     for (int k = 1; k < q; k += 2) {
@@ -130,11 +132,11 @@ vector_double machineDM::modify_criteria(
         assert(c[k - 1] < m);
         assert(c[k] >= 0);
         assert(c[k] < m);
-        zhat[k - 1] = (1.0 - gamma) * obf[c[k - 1]] + gamma * obf[c[k]];
-        zhat[k] = (1.0 - gamma) * obf[c[k]] + gamma * obf[c[k - 1]];
+        zhat[k - 1] = (1.0 - gamma) * obj[c[k - 1]] + gamma * obj[c[k]];
+        zhat[k] = (1.0 - gamma) * obj[c[k]] + gamma * obj[c[k - 1]];
     }
     // if q is odd.
-    if (q % 2) zhat[q - 1] = obf[c[q - 1]];
+    if (q % 2) zhat[q - 1] = obj[c[q - 1]];
 
     /*
        (a) the m - q unmodelled criteria set at their
@@ -169,12 +171,10 @@ double machineDM::stewart_value_function(const vector_double &obj, const vector_
 // M:It's been supposed that the training data is a vector of decision vectors. and their last member is the
 // dm_evaluated value
 
-double machineDM::dm_evaluate(
-    vector_double &obj) // moved onst vector_double &alpha, const vector_double &beta, const vector_double
-                        // &lambda, double gamma, double sigma, double delta, int q to machineDM calss parameters
+double machineDM::dm_evaluate(const vector_double &obj) // moved onst vector_double &alpha, const vector_double &beta, const vector_double
+// &lambda, double gamma, double sigma, double delta, int q to machineDM calss parameters
 {
     int m = obj.size();
-    vector_double tau = this->pref.ideal_point; // M: I'm not sure if this is a right way to access the ideal_point
     std::vector<int> c(m);
 
     if (q < m) {
@@ -186,25 +186,27 @@ double machineDM::dm_evaluate(
         }
     }
 
-    vector_double z_mod = machineDM::modify_criteria(obj, c);
-
-    /*
-      (b) the addition of a noise term, normally
-      distributed with zero mean and a variance of
-      sigma^2 (which will be a specified model parameter),
-    */
-    double noise = machineDM::Rand_normal(0.0, sigma * sigma);
+    const vector_double z_mod = machineDM::modify_criteria(obj, c);
 
     /* (c) a shift in the reference levels tau_i from the ‘ideal’
        positions by an amount \delta, which may be
        positive or negative (and which is also a
        specified model parameter).
     */
+    const vector_double tau = this->pref.ideal_point; // M: I'm not sure if this is a right way to access the ideal_point
     vector_double tau_mod(m);
     for (int i = 0; i < m; i++) {
         tau_mod[i] = tau[i] + delta;
     }
 
+        /*
+      (b) the addition of a noise term, normally
+      distributed with zero mean and a variance of
+      sigma^2 (which will be a specified model parameter),
+    */
+    double noise = (sigma > 0) ? rand_normal(m_e) : 0.0;
+    
+    //FIXME: this should be the value function configured by the user.
     double estim_v = noise + machineDM::stewart_value_function(z_mod, tau_mod);
     return estim_v;
 }
