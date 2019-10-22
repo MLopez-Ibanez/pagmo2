@@ -91,31 +91,35 @@ void svm::free_examples(DOC **examples, long num_examples)
 //     else
 //         for (int i = start; i < popsize; i++) {
 //             // compute preference for current individual
-//             pop.m_pref[i] = mdm.value(pop.m_f[i]);
+//             m_pref[i] = mdm.value(m_f[i]);
 //         };
 // }
 
 // comparing the solutions by DM 2 by 2
 void svm::setRankingPreferences(population &pop, int start, int popsize, int objsize)
 {
+    m_pref.resize(popsize);
     // init ranking preferences to 0
     for (int i = start; i < popsize; i++) {
         // init preference for current individual
-        pop.m_pref[i] = 0;
+        m_pref[i] = 0;
     }
     double pref;
-    std::vector<vector_double> f = pop.get_f();
+    std::vector<vector_double> x = pop.get_x(); // M: I was assuming we are giving obj to MDM to evaluate. but right now
+                                                // we don't have such a function to evalute and compare objs
     for (int i = start; i < popsize; i++)
         for (int j = i + 1; j < popsize; j++) {
-            pref = mdm.value(f[i]) - mdm.value(f[j]); // M: instead of userPreference in old files
+            pref = mdm.value(x[i]) - mdm.value(x[j]);
 
-            if (pref <= 0) pop.m_pref[i]--;
-            if (pref >= 0) pop.m_pref[j]--;
+            if (pref <= 0) m_pref[i]--;
+            if (pref >= 0) m_pref[j]--;
         }
 }
 
 double svm::train(pagmo::population &pop, int start, int popsize, int objsize)
 {
+    setRankingPreferences(pop, start, popsize, objsize); // M: this function wasn't called at all, I added it here. I
+                                                         // also change the start value at the end of train function
     double results = 0.;
 
     m_max_feature_id = objsize;
@@ -170,7 +174,8 @@ double svm::train(pagmo::population &pop, int start, int popsize, int objsize)
 
     // DEBUG
     // write_model("debug.model",m_model);
-
+    start += popsize; // M: I'm not sure about this. I added it to skip comparing the previous training data with the
+                      // new ones.
     return results;
 }
 
@@ -262,7 +267,7 @@ void svm::updateSvmProblem(DOC ***examples_p, double **targets_p, long *num_exam
         *targets_p = (double *)calloc((*num_examples_p), sizeof(double));
 
     for (int i = popstart, e = exstart; i < popsize; i++, e++) {
-        (*targets_p)[e] = pop.m_pref[i];
+        (*targets_p)[e] = m_pref[i];
         (*examples_p)[e] = create_instance(e, f[i], objsize, qid + 1);
     }
 }

@@ -74,52 +74,45 @@ double tchebycheff_value_function::value(const std::vector<double> &obj) const
 }
 /* Select a subset of q criteria from m true criteria with probability
    proportional to their weights.  */
-std::vector<int> machineDM::select_criteria_subset() const 
+std::vector<int> machineDM::select_criteria_subset() const
 {
-    const vector_double &w = this->pref.weights;
+    vector_double w = this->get_weights();
     std::vector<int> c(w.size());
-    double sum = accumulate(w.begin(), w.end(), 0);
-    vector_double probs(w.size());
-    assert(sum > 0);
+
     for (size_t i = 0; i < w.size(); i++) {
-        probs[i] = w[i] / sum; // M: instead of ranking the elements based on weights, I directly use weights to
-                               // calculate the prob. There is no need to rank them I think
-    }
-    for (size_t i = 0; i < w.size(); i++) {
-        // FIXME: Use the m_e random device.
-        int k = roulette_wheel(probs);
+        int k = roulette_wheel(w);
         c[i] = k;
-        probs[k] = 0.0;
+        w[k] = 0.0;
     }
     return c;
-}
+} // namespace pagmo
 vector_double machineDM::get_weights() const
 {
     return this->pref.weights;
 }
 // This roulette_wheel function returns an index of an element based on the
 // probabilities constructed based on the values of the passed vector
-int machineDM::roulette_wheel(vector_double &v)
+int machineDM::roulette_wheel(const vector_double &w) const
 {
-    // Random distributions
-    std::uniform_real_distribution<> drng(0., 1.); // to generate a number in [0, 1)
+    vector_double v(w.size());
+    double sum = accumulate(w.begin(), w.end(), 0);
+    double accumulated = 0.;
+    for (int i = 0; i < v.size(); i++) {
 
-    double sum = 0.;
-    double rndNumber;
-    int i;
-    for (i = 0; i < v.size(); i++) {
-        sum += v[i];
+        accumulated += w[i];
+        v[i] = accumulated / sum;
     }
-    srand((unsigned)time(NULL)); // M: I'm not sure if this line randomizes the seed or if we should randomize it at all
-    rndNumber = ((double)rand() / (double)RAND_MAX) * sum;
-    for (i = 0; i < v.size(); i++) {
+    // Random distributions
+    double rndNumber = uniform_real_from_range(0, 1, m_e);
+    for (int i = 0; i < v.size(); i++) {
         if (v[i] >= rndNumber) {
             return i;
         }
     }
 }
-vector_double machineDM::modify_criteria(const vector_double &obj,
-                                         const std::vector<int> &c) // M: I have assumed that tau in previous vrsion is ideal point. thus I have changed it
+vector_double machineDM::modify_criteria(
+    const vector_double &obj,
+    const std::vector<int> &c) // M: I have assumed that tau in previous vrsion is ideal point. thus I have changed it
 {
     assert(gamma >= 0);
     assert(gamma < 1);
@@ -150,7 +143,8 @@ vector_double machineDM::modify_criteria(const vector_double &obj,
 
     return zhat;
 }
-double machineDM::stewart_value_function(const vector_double &obj, const vector_double &tau) const
+double machineDM::stewart_value_function(const vector_double &obj, const vector_double &tau)
+    const // M: This tau is not hte same as the tau parameter of machineDM. should be reviewed
 {
     double sum = 0.0;
     double st;
@@ -171,7 +165,8 @@ double machineDM::stewart_value_function(const vector_double &obj, const vector_
 // M:It's been supposed that the training data is a vector of decision vectors. and their last member is the
 // dm_evaluated value
 
-double machineDM::dm_evaluate(const vector_double &obj) // moved onst vector_double &alpha, const vector_double &beta, const vector_double
+double machineDM::dm_evaluate(
+    const vector_double &obj) // moved onst vector_double &alpha, const vector_double &beta, const vector_double
 // &lambda, double gamma, double sigma, double delta, int q to machineDM calss parameters
 {
     int m = obj.size();
@@ -193,20 +188,21 @@ double machineDM::dm_evaluate(const vector_double &obj) // moved onst vector_dou
        positive or negative (and which is also a
        specified model parameter).
     */
-    const vector_double tau = this->pref.ideal_point; // M: I'm not sure if this is a right way to access the ideal_point
+    const vector_double tau
+        = this->pref.ideal_point; // M: I'm not sure if this is a right way to access the ideal_point
     vector_double tau_mod(m);
     for (int i = 0; i < m; i++) {
         tau_mod[i] = tau[i] + delta;
     }
 
-        /*
-      (b) the addition of a noise term, normally
-      distributed with zero mean and a variance of
-      sigma^2 (which will be a specified model parameter),
-    */
+    /*
+  (b) the addition of a noise term, normally
+  distributed with zero mean and a variance of
+  sigma^2 (which will be a specified model parameter),
+*/
     double noise = (sigma > 0) ? rand_normal(m_e) : 0.0;
-    
-    //FIXME: this should be the value function configured by the user.
+
+    // FIXME: this should be the value function configured by the user.
     double estim_v = noise + machineDM::stewart_value_function(z_mod, tau_mod);
     return estim_v;
 }

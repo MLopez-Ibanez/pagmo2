@@ -197,13 +197,16 @@ public:
      * @throws std::invalid_argument if \p cr is not \f$ \in [0,1[\f$, \p m is not \f$ \in [0,1]\f$, \p eta_c is not in
      * [1,100[ or \p eta_m is not in [1,100[.
      */
-    machineDM(problem &prob, value_function &pref, unsigned mode, unsigned seed = pagmo::random_device::next())
-        : prob(prob), pref(pref), mode(mode),
-        rand_normal(0., sigma * sigma) // to generate a normally distributed number
-        {
-            m_e.seed(seed);
-            m_seed = seed;
-        };
+
+    machineDM(problem &prob, value_function &pref, unsigned mode, vector_double alpha, vector_double beta,
+              vector_double lambda, vector_double tau, double gamma, double sigma, double delta, int q,
+              unsigned seed = pagmo::random_device::next())
+        : prob(prob), pref(pref), mode(mode), alpha(alpha), beta(beta), lambda(lambda), tau(tau), gamma(gamma),
+          sigma(sigma), delta(delta), q(q), rand_normal(0., sigma * sigma) // to generate a normally distributed number
+    {
+        m_e.seed(seed);
+        m_seed = seed;
+    };
 
     /**
      * Evaluate fitness (objective vector) according to decision maker.
@@ -214,15 +217,14 @@ public:
     std::vector<vector_double> trainFile;
     vector_double fitness(vector_double);
 
-    vector_double get_weights();
+    vector_double get_weights() const;
     /* Select a subset of q criteria from m true criteria with probability
    proportional to their weights.  */
-    std::vector<int> select_criteria_subset();
-    int roulette_wheel(vector_double &);
-    vector_double modify_criteria(vector_double &obf, const std::vector<int> &c);
+    std::vector<int> select_criteria_subset() const;
+    int roulette_wheel(const vector_double &w) const;
+    vector_double modify_criteria(const vector_double &obf, const std::vector<int> &c);
 
-    double dm_evaluate(vector_double &obj);
-
+    double dm_evaluate(const vector_double &obj);
     double stewart_value_function(const vector_double &obj, const vector_double &tau) const;
     double Rand_normal(double mean, double sd);
 
@@ -243,7 +245,7 @@ public:
     std::vector<size_t> rank(const pagmo::population &pop) const;
     template <typename Archive>
     void serialize(Archive &ar, unsigned);
-    vector_double alpha, beta, lambda;
+    vector_double alpha, beta, lambda, tau;
     double gamma, sigma, delta;
     int q;
     problem &prob;

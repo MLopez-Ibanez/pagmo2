@@ -53,7 +53,7 @@ public:
 
     // k for cross validation model selection (0 = loo)
     int m_cv_k;
-
+    vector_double m_pref;
     // whether to perform model selection
     bool m_do_model_selection;
     double m_results_threshold;
