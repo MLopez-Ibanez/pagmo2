@@ -98,23 +98,30 @@ population bcemoa::bc_evolve(population pop)
 
 population bcemoa::evolvei(population pop)
 {
-    population trainingPop(pop.get_problem());
+    std::vector<vector_double> trainingPop;
+    int start = 0;
     for (int iter = 0; iter < maxInteractions; iter++) {
         // create a population of m randomly selected individuals for training
         if (ml.mdm.mode != 1) {
             auto fnds_res = fast_non_dominated_sorting(pop.get_f());
-            auto ndf = std::get<0>(fnds_res);         // non dominated fronts [[0,3,2],[1,5,6],[4],...]
-            std::vector<double> index(ndf.size(), 1); // giving the same weight to all the nondominated solutions
-            int j;
-            std::vector<vector_double> x = pop.get_x();
+            auto ndf1 = std::get<0>(fnds_res); // non dominated fronts [[0,3,2],[1,5,6],[4],...]
+            auto ndf = ndf1[0];
+            std::vector<vector_double::size_type> index(ndf.size());
+            std::iota(index.begin(), index.end(), 0u);
+            std::shuffle(index.begin(), index.end(), m_e);
+            // std::vector<vector_double> x = pop.get_x();
             std::vector<vector_double> f = pop.get_f();
             for (int i = 0; i < n_of_evals; i++) {
-                j = ml.mdm.roulette_wheel(index);
-                trainingPop.push_back(x[j], f[j]);
+                // trainingPop.push_back(x[index[i]], f[index[i]]);
+                trainingPop.push_back(f[ndf[index[i]]]);
+                // temp.push_back(this->ml.mdm.dm_evaluate(f[index[i]]));
+                // trainingPop.push_back(temp);
             }
             // update svm problems
             // train svm MODEL
-            ml.train(trainingPop, 0, static_cast<int>(trainingPop.size()), (int)(f[1].size()));
+            ml.train(trainingPop, start, static_cast<int>(trainingPop.size()), (int)(f[1].size()));
+            start += n_of_evals; // M: To avoid comparing the previous set with the new set (because the prevous sets
+                                 // would get great negative values in set_preference funciton)
             // rank original population by model in the crowding distance calculations
         }
         // We store some useful variables

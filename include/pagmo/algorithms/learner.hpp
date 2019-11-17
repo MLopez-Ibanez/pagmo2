@@ -62,21 +62,21 @@ public:
     // void setPreferences(population &pop, int start, int popsize, int objsize, bool rankerprefs);
     double preference(vector_double &obj, int objsize); //, bool rankerprefs
     void print_help();
-    double train(pagmo::population &pop, int start, int popsize, int objsize);
+    double train(std::vector<vector_double> &pop, int start, int popsize, int objsize);
     int start;
     // protected:
 
     void free_examples(DOC **examples, long num_examples); // Deletes the training examples
     // void init();
-    void setRankingPreferences(population &pop, int start, int popsize, int objsize);
+    void setRankingPreferences(std::vector<vector_double> &pop, int start, int popsize, int objsize);
 
     double do_model_selection();
     void do_model_evaluation(double *best_performance, int *best_kernel_type, int *best_degree, double *best_gamma);
     double do_cross_validation();
-    void updateSvmProblem(DOC ***examples_p, double **targets_p, long *num_examples_p, long qid, pagmo::population &pop,
-                          int popstart, int popsize, int objsize);
+    void updateSvmProblem(DOC ***examples_p, double **targets_p, long *num_examples_p, long qid,
+                          std::vector<vector_double> &pop, int popstart, int popsize, int objsize);
     DOC *create_instance(int instnum, vector_double &obj, int objsize, int qid);
-    void updateCVProblems(population &pop, int popstart, int popsize, int objsize);
+    void updateCVProblems(std::vector<vector_double> &pop, int popstart, int popsize, int objsize);
     void train(DOC **examples, double *targets, long num_examples);
     double test(DOC **examples, double *targets, long num_examples);
     void parse_command_line(int start, int argc, char *argv[], long *verbosity, LEARN_PARM *learn_parm,

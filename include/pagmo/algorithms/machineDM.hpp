@@ -254,7 +254,7 @@ public:
     mutable detail::random_engine_type m_e;
     unsigned m_seed;
     std::normal_distribution<double> rand_normal;
-};
+}; // MachineDM
 
 } // namespace pagmo
 

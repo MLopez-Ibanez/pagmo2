@@ -95,7 +95,7 @@ vector_double machineDM::get_weights() const
 int machineDM::roulette_wheel(const vector_double &w) const
 {
     vector_double v(w.size());
-    double sum = accumulate(w.begin(), w.end(), 0);
+    double sum = std::accumulate(w.begin(), w.end(), 0.0);
     double accumulated = 0.;
     for (int i = 0; i < v.size(); i++) {
 
@@ -242,14 +242,14 @@ vector_double machineDM::fitness(vector_double solution)
     return f;
 }
 
-double machineDM::value(vector_double solution)
+double machineDM::value(vector_double obj)
 {
-    vector_double f = fitness(solution);
+    // vector_double f = fitness(solution);
     // FIXME: Apply biases
     if (this->mode == NI) {
-        return pref.value(f);
+        return pref.value(obj);
     }
-    return dm_evaluate(f);
+    return dm_evaluate(obj);
 }
 
 double machineDM::true_value(const vector_double &solution) const

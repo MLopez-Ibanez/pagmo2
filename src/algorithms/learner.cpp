@@ -96,7 +96,7 @@ void svm::free_examples(DOC **examples, long num_examples)
 // }
 
 // comparing the solutions by DM 2 by 2
-void svm::setRankingPreferences(population &pop, int start, int popsize, int objsize)
+void svm::setRankingPreferences(std::vector<vector_double> &pop, int start, int popsize, int objsize)
 {
     m_pref.resize(popsize);
     // init ranking preferences to 0
@@ -105,18 +105,19 @@ void svm::setRankingPreferences(population &pop, int start, int popsize, int obj
         m_pref[i] = 0;
     }
     double pref;
-    std::vector<vector_double> x = pop.get_x(); // M: I was assuming we are giving obj to MDM to evaluate. but right now
-                                                // we don't have such a function to evalute and compare objs
+    // std::vector<vector_double> x = pop.get_x(); // M: I was assuming we are giving obj to MDM to evaluate. but right
+    // now
+    // we don't have such a function to evalute and compare objs
     for (int i = start; i < popsize; i++)
         for (int j = i + 1; j < popsize; j++) {
-            pref = mdm.value(x[i]) - mdm.value(x[j]);
+            pref = mdm.value(pop[i]) - mdm.value(pop[j]);
 
             if (pref <= 0) m_pref[i]--;
             if (pref >= 0) m_pref[j]--;
         }
 }
 
-double svm::train(pagmo::population &pop, int start, int popsize, int objsize)
+double svm::train(std::vector<vector_double> &pop, int start, int popsize, int objsize)
 {
     setRankingPreferences(pop, start, popsize, objsize); // M: this function wasn't called at all, I added it here. I
                                                          // also change the start value at the end of train function
@@ -247,9 +248,9 @@ double svm::do_cross_validation()
 }
 
 void svm::updateSvmProblem(DOC ***examples_p, double **targets_p, long *num_examples_p, long qid,
-                           pagmo::population &pop, int popstart, int popsize, int objsize)
+                           std::vector<vector_double> &pop, int popstart, int popsize, int objsize)
 {
-    std::vector<vector_double> f = pop.get_f();
+    // std::vector<vector_double> f = pop.get_f();
     // update set size
     long exstart = *num_examples_p;
     *num_examples_p += popsize - popstart;
@@ -268,7 +269,7 @@ void svm::updateSvmProblem(DOC ***examples_p, double **targets_p, long *num_exam
 
     for (int i = popstart, e = exstart; i < popsize; i++, e++) {
         (*targets_p)[e] = m_pref[i];
-        (*examples_p)[e] = create_instance(e, f[i], objsize, qid + 1);
+        (*examples_p)[e] = create_instance(e, pop[i], objsize, qid + 1);
     }
 }
 
@@ -291,7 +292,7 @@ DOC *svm::create_instance(int instnum, vector_double &obj, int objsize, int qid)
     return doc;
 }
 
-void svm::updateCVProblems(population &pop, int popstart, int popsize, int objsize)
+void svm::updateCVProblems(std::vector<vector_double> &pop, int popstart, int popsize, int objsize)
 {
     if (popstart != 0) {
         std::cerr << "ERROR: assuming zero popstart" << std::endl;
