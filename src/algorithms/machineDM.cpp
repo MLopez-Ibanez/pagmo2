@@ -166,12 +166,16 @@ double machineDM::stewart_value_function(const vector_double &obj, const vector_
 // dm_evaluated value
 
 double machineDM::dm_evaluate(
-    const vector_double &obj) // moved onst vector_double &alpha, const vector_double &beta, const vector_double
+    const vector_double &obj1) // moved onst vector_double &alpha, const vector_double &beta, const vector_double
 // &lambda, double gamma, double sigma, double delta, int q to machineDM calss parameters
 {
-    int m = obj.size();
+    int m = obj1.size();
     std::vector<int> c(m);
-
+    vector_double upperBound = this->prob.get_ub(),
+                  obj(obj1); // M: Scaling the obj to [0,1] by deviding each obj value by its upperbound.
+    for (int i = 0; i < m; i++) {
+        obj[i] /= upperBound[i];
+    }
     if (q < m) {
         c = machineDM::select_criteria_subset();
     } else {

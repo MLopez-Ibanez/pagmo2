@@ -95,7 +95,7 @@ public:
             if (monomStr[i][1] == 'x')      // x is after the +/- sign
                 monomStr[i].insert(1, "1"); //& gets 1 as coefficient
             bool flag = false;              // assuming that x is not present
-            int len = monomStr[i].size();
+            size_t len = monomStr[i].size();
             for (j = 1; j < len; ++j)
                 if (monomStr[i][j] == 'x') // but we test this
                 {
