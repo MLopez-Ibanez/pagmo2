@@ -171,11 +171,11 @@ double machineDM::dm_evaluate(
 {
     int m = obj1.size();
     std::vector<int> c(m);
-    vector_double upperBound = this->prob.get_ub(),
-                  obj(obj1); // M: Scaling the obj to [0,1] by deviding each obj value by its upperbound.
-    for (int i = 0; i < m; i++) {
-        obj[i] /= upperBound[i];
-    }
+    // const vector_double upperBound
+    //     = this->prob.get_ub(); // M: Scaling the obj to [0,1] by deviding each obj value by its upperbound.
+    vector_double obj;
+    // std::pair<vector_double, vector_double> bounds = this->prob.get_bounds();
+
     if (q < m) {
         c = machineDM::select_criteria_subset();
     } else {
@@ -185,8 +185,10 @@ double machineDM::dm_evaluate(
         }
     }
 
-    const vector_double z_mod = machineDM::modify_criteria(obj, c);
-
+    const vector_double z_mod = machineDM::modify_criteria(obj1, c);
+    // for (int i = 0; i < m; i++) {
+    //     obj[i] = obj1[i] / upperBound[i];
+    // }
     /* (c) a shift in the reference levels tau_i from the ‘ideal’
        positions by an amount \delta, which may be
        positive or negative (and which is also a
