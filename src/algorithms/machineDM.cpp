@@ -31,7 +31,7 @@
 namespace pagmo
 {
 
-double linear_value_function::value(const std::vector<double> &obj) const
+double linear_value_function::value(const std::vector<double> &obj, std::vector<double>) const
 {
     assert(this->weights.size() == obj.size());
 
@@ -46,6 +46,24 @@ double linear_value_function::value(const std::vector<double> &obj) const
         value += w * o;
     }
     return value;
+}
+double stewart_value_function::value(const std::vector<double> &obj, std::vector<double> tau)
+    const // M: This tau is not hte same as the tau parameter of machineDM. should be reviewed
+{
+    double sum = 0.0;
+    double st;
+    vector_double w = this->weights;
+    for (int i = 0; i < obj.size(); i++) {
+        if (obj[i] <= tau[i]) {
+            st = lambda[i] * (exp(alpha[i] * obj[i]) - 1.0) / (exp(alpha[i] * tau[i]) - 1.0);
+        } else {
+            st = lambda[i]
+                 + (1.0 - lambda[i]) * (1.0 - exp(-beta[i] * (obj[i] - tau[i])))
+                       / (1.0 - exp(-beta[i] * (1.0 - tau[i])));
+        }
+        sum += w[i] * st;
+    }
+    return sum;
 }
 
 double quadratic_value_function::value(const std::vector<double> &obj) const
@@ -143,24 +161,6 @@ vector_double machineDM::modify_criteria(
 
     return zhat;
 }
-double machineDM::stewart_value_function(const vector_double &obj, const vector_double &tau)
-    const // M: This tau is not hte same as the tau parameter of machineDM. should be reviewed
-{
-    double sum = 0.0;
-    double st;
-    vector_double w = this->pref.weights;
-    for (int i = 0; i < obj.size(); i++) {
-        if (obj[i] <= tau[i]) {
-            st = lambda[i] * (exp(alpha[i] * obj[i]) - 1.0) / (exp(alpha[i] * tau[i]) - 1.0);
-        } else {
-            st = lambda[i]
-                 + (1.0 - lambda[i]) * (1.0 - exp(-beta[i] * (obj[i] - tau[i])))
-                       / (1.0 - exp(-beta[i] * (1.0 - tau[i])));
-        }
-        sum += w[i] * st;
-    }
-    return sum;
-}
 
 // M:It's been supposed that the training data is a vector of decision vectors. and their last member is the
 // dm_evaluated value
@@ -209,7 +209,7 @@ double machineDM::dm_evaluate(
     double noise = (sigma > 0) ? rand_normal(m_e) : 0.0;
 
     // FIXME: this should be the value function configured by the user.
-    double estim_v = noise + machineDM::stewart_value_function(z_mod, tau_mod);
+    double estim_v = noise + this->st.value(z_mod, tau_mod);
     return estim_v;
 }
 double machineDM::Rand_normal(double mean, double sd)
@@ -263,6 +263,34 @@ double machineDM::true_value(const vector_double &solution) const
     assert(prob.get_nx() == solution.size());
     vector_double f = prob.fitness(solution);
     return pref.value(f);
+}
+void machineDM::setRankingPreferences(std::vector<vector_double> pop, std::vector<int> &m_pref, int start, int popsize,
+                                      int objsize)
+{
+    m_pref.resize(popsize);
+    // init ranking preferences to 0
+    for (int i = start; i < popsize; i++) {
+        // init preference for current individual
+        m_pref[i] = 0;
+    }
+    double pref;
+    // Scaling the population of objective values
+    vector_double ideal = pagmo::ideal(pop);
+    vector_double nadir = pagmo::nadir(pop);
+    for (int i = start; i < popsize; i++)
+        for (int j = i + 1; j < objsize; j++) {
+            pop[i][j] = (pop[i][j] - ideal[j]) / (nadir[j] - ideal[j]);
+        }
+    // std::vector<vector_double> x = pop.get_x(); // M: I was assuming we are giving obj to MDM to evaluate. but right
+    // now
+    // we don't have such a function to evalute and compare objs
+    for (int i = start; i < popsize; i++)
+        for (int j = i + 1; j < popsize; j++) {
+            pref = this->value(pop[i]) - this->value(pop[j]);
+
+            if (pref <= 0) m_pref[i]--;
+            if (pref >= 0) m_pref[j]--;
+        }
 }
 
 std::vector<size_t> machineDM::rank(const pagmo::population &pop) const

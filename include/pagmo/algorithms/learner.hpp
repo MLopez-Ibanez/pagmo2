@@ -53,7 +53,7 @@ public:
 
     // k for cross validation model selection (0 = loo)
     int m_cv_k;
-    vector_double m_pref;
+    std::vector<int> m_pref;
     // whether to perform model selection
     bool m_do_model_selection;
     double m_results_threshold;
@@ -68,7 +68,7 @@ public:
 
     void free_examples(DOC **examples, long num_examples); // Deletes the training examples
     // void init();
-    void setRankingPreferences(std::vector<vector_double> &pop, int start, int popsize, int objsize);
+    // void setRankingPreferences(std::vector<vector_double> pop, int start, int popsize, int objsize);//M: moved to MDM
 
     double do_model_selection();
     void do_model_evaluation(double *best_performance, int *best_kernel_type, int *best_degree, double *best_gamma);

@@ -19,7 +19,7 @@ namespace pagmo
 class PAGMO_DLL_PUBLIC value_function
 {
 public:
-    virtual double value(const std::vector<double> &) const = 0;
+    virtual double value(const std::vector<double> &, std::vector<double> ip = {0, 0}) const = 0;
     std::vector<double> weights;
     std::vector<double> ideal_point;
 
@@ -39,11 +39,19 @@ class PAGMO_DLL_PUBLIC linear_value_function : public value_function
 {
 public:
     linear_value_function(std::vector<double> w) : value_function(w){};
-    double value(const std::vector<double> &) const;
+    double value(const std::vector<double> &, std::vector<double> ip = {0, 0}) const;
 };
 
-class PAGMO_DLL_PUBLIC poly_value_function
-    : public value_function // Mahdi: The value function is protected, why we have public here?
+class PAGMO_DLL_PUBLIC stewart_value_function : public value_function
+{
+public:
+    stewart_value_function(std::vector<double> w, std::vector<double> tau, std::vector<double> alpha,
+                           std::vector<double> beta, std::vector<double> lambda)
+        : value_function(w), tau(tau), alpha(alpha), beta(beta), lambda(lambda){};
+    double value(const std::vector<double> &, std::vector<double>) const;
+    vector_double alpha, beta, lambda, tau;
+};
+class PAGMO_DLL_PUBLIC poly_value_function : public value_function
 {
 private:
     std::vector<double> weights;
@@ -198,11 +206,10 @@ public:
      * [1,100[ or \p eta_m is not in [1,100[.
      */
 
-    machineDM(problem &prob, value_function &pref, unsigned mode, vector_double alpha, vector_double beta,
-              vector_double lambda, vector_double tau, double gamma, double sigma, double delta, int q,
-              unsigned seed = pagmo::random_device::next())
-        : prob(prob), pref(pref), mode(mode), alpha(alpha), beta(beta), lambda(lambda), tau(tau), gamma(gamma),
-          sigma(sigma), delta(delta), q(q), rand_normal(0., sigma * sigma) // to generate a normally distributed number
+    machineDM(problem &prob, value_function &pref, stewart_value_function &st, unsigned mode, double gamma,
+              double sigma, double delta, int q, unsigned seed = pagmo::random_device::next())
+        : prob(prob), pref(pref), st(st), mode(mode), gamma(gamma), sigma(sigma), delta(delta), q(q),
+          rand_normal(0., sigma * sigma) // to generate a normally distributed number
     {
         m_e.seed(seed);
         m_seed = seed;
@@ -214,7 +221,6 @@ public:
      *
      **/
 
-    std::vector<vector_double> trainFile;
     vector_double fitness(vector_double);
 
     vector_double get_weights() const;
@@ -225,7 +231,6 @@ public:
     vector_double modify_criteria(const vector_double &obf, const std::vector<int> &c);
 
     double dm_evaluate(const vector_double &obj);
-    double stewart_value_function(const vector_double &obj, const vector_double &tau) const;
     double Rand_normal(double mean, double sd);
 
     /**
@@ -241,15 +246,17 @@ public:
      *
      **/
     double true_value(const vector_double &) const;
-
+    void setRankingPreferences(std::vector<vector_double> pop, std::vector<int> &m_pref, int start, int popsize,
+                               int objsize);
     std::vector<size_t> rank(const pagmo::population &pop) const;
     template <typename Archive>
     void serialize(Archive &ar, unsigned);
-    vector_double alpha, beta, lambda, tau;
+
     double gamma, sigma, delta;
     int q;
     problem &prob;
     value_function &pref;
+    stewart_value_function &st;
     unsigned mode;
     mutable detail::random_engine_type m_e;
     unsigned m_seed;
