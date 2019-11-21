@@ -275,14 +275,6 @@ void machineDM::setRankingPreferences(std::vector<vector_double> pop, std::vecto
     }
     double pref;
 
-    // M: Delete this part
-    // Scaling the population of objective values
-    // vector_double ideal = pagmo::ideal(pop);
-    // vector_double nadir = pagmo::nadir(pop);
-    // for (int i = start; i < popsize; i++)
-    //     for (int j = i + 1; j < objsize; j++) {
-    //         pop[i][j] = (pop[i][j] - ideal[j]) / (nadir[j] - ideal[j]);
-    //     }
     // std::vector<vector_double> x = pop.get_x(); // M: I was assuming we are giving obj to MDM to evaluate. but right
     // now
     // we don't have such a function to evalute and compare objs

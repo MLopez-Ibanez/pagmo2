@@ -31,8 +31,9 @@
 
 namespace pagmo
 {
-svm::svm(machineDM &dm, int start, int cv_k) // svm(machineDM &dm, int start, int argc, char **argv)
-    : mdm(dm), start(start), m_cv_k(cv_k)
+svm::svm(machineDM &dm, int cv_k,
+         bool m_do_model_selection) // svm(machineDM &dm, int start, int argc, char **argv)
+    : mdm(dm), m_cv_k(cv_k), m_do_model_selection(m_do_model_selection)
 // M: WE may also define svm as a derived class od machineDM so it can access the
 // utility funcionts and etc
 {

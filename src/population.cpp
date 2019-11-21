@@ -634,7 +634,6 @@ void population::clear()
     m_ID.clear();
     m_x.clear();
     m_f.clear();
-    m_pref.clear();
 }
 
 } // namespace pagmo

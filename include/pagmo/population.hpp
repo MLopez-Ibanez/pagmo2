@@ -281,14 +281,6 @@ public:
         return m_x;
     }
 
-    /// Const getter for the preferences.
-    /**
-     * @return a const reference to the vector of preferences.
-     */
-    const vector_double &get_pref() const
-    {
-        return m_pref;
-    }
     /// Const getter for the individual IDs.
     /**
      * @return a const reference to the vector of individual IDs.
@@ -355,9 +347,6 @@ private:
     void clear();
 
 public:
-    // Desirability/Preference
-    vector_double m_pref;
-
 private:
     // Problem.
     problem m_prob;

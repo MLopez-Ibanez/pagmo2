@@ -119,9 +119,18 @@ population bcemoa::evolvei(population pop)
             }
             // update svm problems
             // train svm MODEL
+            // Scaling the population of objective values
+            vector_double ideal = pagmo::ideal(f);
+            vector_double nadir = pagmo::nadir(f);
+            for (int i = start; i < trainingPop.size(); i++)
+                for (int j = 0; j < f[0].size(); j++) {
+                    trainingPop[i][j] = (trainingPop[i][j] - ideal[j]) / (nadir[j] - ideal[j]);
+                }
             ml.train(trainingPop, start, static_cast<int>(trainingPop.size()), (int)(f[1].size()));
-            start += n_of_evals; // M: To avoid comparing the previous set with the new set (because the prevous sets
-                                 // would get great negative values in set_preference funciton)
+            // start += n_of_evals; // M: To avoid comparing the previous set with the new set (because the prevous sets
+            // would get great negative values in set_preference funciton)
+            // Had to disable this; if the start value is anything different than 0 there is a problem in
+            // UpdateCVproblem
             // rank original population by model in the crowding distance calculations
         }
         // We store some useful variables

@@ -20,8 +20,10 @@ namespace pagmo
 {
 class PAGMO_DLL_PUBLIC svm
 {
+
 public:
-    svm(machineDM &dm, int start = 0, int cv_k = 0); // svm(machineDM &dm, int start, int argc, char **argv)
+    svm(machineDM &dm, int cv_k = 3,
+        bool do_model_selection = true); // svm(machineDM &dm, int start, int argc, char **argv)
     //     : start(start), mdm(dm)   // M: WE may also define svm as a derived class od machineDM so it can access the
     //                               // utility funcionts and etc
     // {
@@ -52,9 +54,10 @@ public:
     long m_max_feature_id; // Parameters of SVMlight
 
     // k for cross validation model selection (0 = loo)
-    int m_cv_k;
+
     std::vector<int> m_pref;
     // whether to perform model selection
+    int m_cv_k;
     bool m_do_model_selection;
     double m_results_threshold;
     machineDM mdm;
@@ -63,7 +66,7 @@ public:
     double preference(vector_double &obj, int objsize); //, bool rankerprefs
     void print_help();
     double train(std::vector<vector_double> &pop, int start, int popsize, int objsize);
-    int start;
+    // int start;
     // protected:
 
     void free_examples(DOC **examples, long num_examples); // Deletes the training examples
