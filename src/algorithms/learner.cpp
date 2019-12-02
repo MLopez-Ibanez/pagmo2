@@ -41,6 +41,7 @@ svm::svm(machineDM &dm, int cv_k,
 
     m_num_examples = 0;
     m_max_feature_id = 0;
+    m_curr_iteration = 0;
     m_model = NULL;
     m_examples = NULL;
     m_targets = NULL;
@@ -50,6 +51,42 @@ svm::svm(machineDM &dm, int cv_k,
     m_test_targets = (double **)calloc(m_cv_k, sizeof(double *));
     m_num_train_examples = (long *)calloc(m_cv_k, sizeof(long));
     m_num_test_examples = (long *)calloc(m_cv_k, sizeof(long));
+
+    // copied from void PreferenceRanker::parse_command_line//
+    /* set default */
+    strcpy(learn_parm.predfile, "trans_predictions");
+    strcpy(learn_parm.alphafile, "");
+    verbosity = 1;
+    learn_parm.biased_hyperplane = 1;
+    learn_parm.sharedslack = 0;
+    learn_parm.remove_inconsistent = 0;
+    learn_parm.skip_final_opt_check = 0;
+    learn_parm.svm_maxqpsize = 10;
+    learn_parm.svm_newvarsinqp = 0;
+    learn_parm.svm_iter_to_shrink = -9999;
+    learn_parm.maxiter = 100000;
+    learn_parm.kernel_cache_size = 40;
+    learn_parm.svm_c = 0.0;
+    learn_parm.eps = 0.1;
+    learn_parm.transduction_posratio = -1.0;
+    learn_parm.svm_costratio = 1.0;
+    learn_parm.svm_costratio_unlab = 1.0;
+    learn_parm.svm_unlabbound = 1E-5;
+    learn_parm.epsilon_crit = 0.001;
+    learn_parm.epsilon_a = 1E-15;
+    learn_parm.compute_loo = 0;
+    learn_parm.rho = 1.0;
+    learn_parm.xa_depth = 0;
+    kernel_parm.kernel_type = 0;
+    kernel_parm.poly_degree = 3;
+    kernel_parm.rbf_gamma = 1.0;
+    kernel_parm.coef_lin = 1;
+    kernel_parm.coef_const = 1;
+    strcpy(kernel_parm.custom, "empty");
+    // strcpy(type, "p");
+
+    m_do_model_selection = true;
+    m_cv_k = 3; // end of void PreferenceRanker::parse_command_line
 }
 svm::~svm()
 {
@@ -129,6 +166,7 @@ void svm::free_examples(DOC **examples, long num_examples)
 
 double svm::train(std::vector<vector_double> &pop, int start, int popsize, int objsize)
 {
+    m_curr_iteration++;
     this->mdm.setRankingPreferences(pop, m_pref, start, popsize,
                                     objsize); // M: this function wasn't called at all, I added it here. I
                                               // also change the start value at the end of train function
@@ -492,274 +530,272 @@ void svm::wait_any_key()
     printf("\n(more)\n");
     (void)getc(stdin);
 }
-void svm::parse_command_line(int start, int argc, char *argv[], long *verbosity, LEARN_PARM *learn_parm,
-                             KERNEL_PARM *kernel_parm)
-{
-    long i;
-    char type[100];
-
-    /* set default */
-    strcpy(learn_parm->predfile, "trans_predictions");
-    strcpy(learn_parm->alphafile, "");
-    (*verbosity) = 1;
-    learn_parm->biased_hyperplane = 1;
-    learn_parm->sharedslack = 0;
-    learn_parm->remove_inconsistent = 0;
-    learn_parm->skip_final_opt_check = 0;
-    learn_parm->svm_maxqpsize = 10;
-    learn_parm->svm_newvarsinqp = 0;
-    learn_parm->svm_iter_to_shrink = -9999;
-    learn_parm->maxiter = 100000;
-    learn_parm->kernel_cache_size = 40;
-    learn_parm->svm_c = 0.0;
-    learn_parm->eps = 0.1;
-    learn_parm->transduction_posratio = -1.0;
-    learn_parm->svm_costratio = 1.0;
-    learn_parm->svm_costratio_unlab = 1.0;
-    learn_parm->svm_unlabbound = 1E-5;
-    learn_parm->epsilon_crit = 0.001;
-    learn_parm->epsilon_a = 1E-15;
-    learn_parm->compute_loo = 0;
-    learn_parm->rho = 1.0;
-    learn_parm->xa_depth = 0;
-    kernel_parm->kernel_type = 0;
-    kernel_parm->poly_degree = 3;
-    kernel_parm->rbf_gamma = 1.0;
-    kernel_parm->coef_lin = 1;
-    kernel_parm->coef_const = 1;
-    strcpy(kernel_parm->custom, "empty");
-    strcpy(type, "p");
-
-    m_do_model_selection = true;
-    m_cv_k = 3;
-
-    for (i = start; (i < argc) && ((argv[i])[0] == '-'); i++) {
-        switch ((argv[i])[1]) {
-            case '?':
-                print_help();
-                exit(0);
-            case 'z':
-                i++;
-                strcpy(type, argv[i]);
-                break;
-            case 'v':
-                i++;
-                (*verbosity) = atol(argv[i]);
-                break;
-            case 'b':
-                i++;
-                learn_parm->biased_hyperplane = atol(argv[i]);
-                break;
-            case 'i':
-                i++;
-                learn_parm->remove_inconsistent = atol(argv[i]);
-                break;
-            case 'f':
-                i++;
-                learn_parm->skip_final_opt_check = !atol(argv[i]);
-                break;
-            case 'q':
-                i++;
-                learn_parm->svm_maxqpsize = atol(argv[i]);
-                break;
-            case 'n':
-                i++;
-                learn_parm->svm_newvarsinqp = atol(argv[i]);
-                break;
-            case '#':
-                i++;
-                learn_parm->maxiter = atol(argv[i]);
-                break;
-            case 'h':
-                i++;
-                learn_parm->svm_iter_to_shrink = atol(argv[i]);
-                break;
-            case 'm':
-                i++;
-                learn_parm->kernel_cache_size = atol(argv[i]);
-                break;
-            case 'c':
-                i++;
-                learn_parm->svm_c = atof(argv[i]);
-                break;
-            case 'w':
-                i++;
-                learn_parm->eps = atof(argv[i]);
-                break;
-            case 'p':
-                i++;
-                learn_parm->transduction_posratio = atof(argv[i]);
-                break;
-            case 'j':
-                i++;
-                learn_parm->svm_costratio = atof(argv[i]);
-                break;
-            case 'e':
-                i++;
-                learn_parm->epsilon_crit = atof(argv[i]);
-                break;
-            case 'o':
-                i++;
-                learn_parm->rho = atof(argv[i]);
-                break;
-            case 'k':
-                i++;
-                learn_parm->xa_depth = atol(argv[i]);
-                break;
-            case 'x':
-                i++;
-                learn_parm->compute_loo = atol(argv[i]);
-                break;
-            case 't':
-                i++;
-                kernel_parm->kernel_type = atol(argv[i]);
-                break;
-            case 'd':
-                i++;
-                kernel_parm->poly_degree = atol(argv[i]);
-                break;
-            case 'g':
-                i++;
-                kernel_parm->rbf_gamma = atof(argv[i]);
-                break;
-            case 's':
-                i++;
-                kernel_parm->coef_lin = atof(argv[i]);
-                break;
-            case 'r':
-                i++;
-                kernel_parm->coef_const = atof(argv[i]);
-                break;
-            case 'u':
-                i++;
-                strcpy(kernel_parm->custom, argv[i]);
-                break;
-            case 'l':
-                i++;
-                strcpy(learn_parm->predfile, argv[i]);
-                break;
-            case 'a':
-                i++;
-                strcpy(learn_parm->alphafile, argv[i]);
-                break;
-            case 'M':
-                m_do_model_selection = true;
-                break;
-            case 'V':
-                i++;
-                m_cv_k = atoi(argv[i]);
-                break;
-            default:
-                printf("\nUnrecognized option %s!\n\n", argv[i]);
-                print_help();
-                exit(0);
-        }
-    }
-
-    if (m_do_model_selection && !m_cv_k) {
-        printf("\nCannot perform model selection with 0 folds.\n");
-        wait_any_key();
-        print_help();
-        exit(0);
-    }
-
-    if (learn_parm->svm_iter_to_shrink == -9999) {
-        if (kernel_parm->kernel_type == LINEAR)
-            learn_parm->svm_iter_to_shrink = 2;
-        else
-            learn_parm->svm_iter_to_shrink = 100;
-    }
-    if (strcmp(type, "c") == 0) {
-        learn_parm->type = CLASSIFICATION;
-    } else if (strcmp(type, "r") == 0) {
-        learn_parm->type = REGRESSION;
-    } else if (strcmp(type, "p") == 0) {
-        learn_parm->type = RANKING;
-    } else if (strcmp(type, "o") == 0) {
-        learn_parm->type = OPTIMIZATION;
-    } else if (strcmp(type, "s") == 0) {
-        learn_parm->type = OPTIMIZATION;
-        learn_parm->sharedslack = 1;
-    } else {
-        printf("\nUnknown type '%s': Valid types are 'c' (classification), 'r' regession, and 'p' preference "
-               "ranking.\n",
-               type);
-        wait_any_key();
-        print_help();
-        exit(0);
-    }
-    if ((learn_parm->skip_final_opt_check) && (kernel_parm->kernel_type == LINEAR)) {
-        printf("\nIt does not make sense to skip the final optimality check for linear kernels.\n\n");
-        learn_parm->skip_final_opt_check = 0;
-    }
-    if ((learn_parm->skip_final_opt_check) && (learn_parm->remove_inconsistent)) {
-        printf("\nIt is necessary to do the final optimality check when removing inconsistent \nexamples.\n");
-        wait_any_key();
-        print_help();
-        exit(0);
-    }
-    if ((learn_parm->svm_maxqpsize < 2)) {
-        printf("\nMaximum size of QP-subproblems not in valid range: %ld [2..]\n", learn_parm->svm_maxqpsize);
-        wait_any_key();
-        print_help();
-        exit(0);
-    }
-    if ((learn_parm->svm_maxqpsize < learn_parm->svm_newvarsinqp)) {
-        printf("\nMaximum size of QP-subproblems [%ld] must be larger than the number of\n", learn_parm->svm_maxqpsize);
-        printf("new variables [%ld] entering the working set in each iteration.\n", learn_parm->svm_newvarsinqp);
-        wait_any_key();
-        print_help();
-        exit(0);
-    }
-    if (learn_parm->svm_iter_to_shrink < 1) {
-        printf("\nMaximum number of iterations for shrinking not in valid range: %ld [1,..]\n",
-               learn_parm->svm_iter_to_shrink);
-        wait_any_key();
-        print_help();
-        exit(0);
-    }
-    if (learn_parm->svm_c < 0) {
-        printf("\nThe C parameter must be greater than zero!\n\n");
-        wait_any_key();
-        print_help();
-        exit(0);
-    }
-    if (learn_parm->transduction_posratio > 1) {
-        printf("\nThe fraction of unlabeled examples to classify as positives must\n");
-        printf("be less than 1.0 !!!\n\n");
-        wait_any_key();
-        print_help();
-        exit(0);
-    }
-    if (learn_parm->svm_costratio <= 0) {
-        printf("\nThe COSTRATIO parameter must be greater than zero!\n\n");
-        wait_any_key();
-        print_help();
-        exit(0);
-    }
-    if (learn_parm->epsilon_crit <= 0) {
-        printf("\nThe epsilon parameter must be greater than zero!\n\n");
-        wait_any_key();
-        print_help();
-        exit(0);
-    }
-    if (learn_parm->rho < 0) {
-        printf("\nThe parameter rho for xi/alpha-estimates and leave-one-out pruning must\n");
-        printf("be greater than zero (typically 1.0 or 2.0, see T. Joachims, Estimating the\n");
-        printf("Generalization Performance of an SVM Efficiently, ICML, 2000.)!\n\n");
-        wait_any_key();
-        print_help();
-        exit(0);
-    }
-    if ((learn_parm->xa_depth < 0) || (learn_parm->xa_depth > 100)) {
-        printf("\nThe parameter depth for ext. xi/alpha-estimates must be in [0..100] (zero\n");
-        printf("for switching to the conventional xa/estimates described in T. Joachims,\n");
-        printf("Estimating the Generalization Performance of an SVM Efficiently, ICML, 2000.)\n");
-        wait_any_key();
-        print_help();
-        exit(0);
-    }
-}
+// void svm::parse_command_line(int start, int argc, char *argv[], long *verbosity, LEARN_PARM *learn_parm,
+//                              KERNEL_PARM *kernel_parm)
+// {
+//     long i;
+//     // char type[100];
+//
+//     /* set default */
+//     strcpy(learn_parm->predfile, "trans_predictions");
+//     strcpy(learn_parm->alphafile, "");
+//     (*verbosity) = 1;
+//     learn_parm->biased_hyperplane = 1;
+//     learn_parm->sharedslack = 0;
+//     learn_parm->remove_inconsistent = 0;
+//     learn_parm->skip_final_opt_check = 0;
+//     learn_parm->svm_maxqpsize = 10;
+//     learn_parm->svm_newvarsinqp = 0;
+//     learn_parm->svm_iter_to_shrink = -9999;
+//     learn_parm->maxiter = 100000;
+//     learn_parm->kernel_cache_size = 40;
+//     learn_parm->svm_c = 0.0;
+//     learn_parm->eps = 0.1;
+//     learn_parm->transduction_posratio = -1.0;
+//     learn_parm->svm_costratio = 1.0;
+//     learn_parm->svm_costratio_unlab = 1.0;
+//     learn_parm->svm_unlabbound = 1E-5;
+//     learn_parm->epsilon_crit = 0.001;
+//     learn_parm->epsilon_a = 1E-15;
+//     learn_parm->compute_loo = 0;
+//     learn_parm->rho = 1.0;
+//     learn_parm->xa_depth = 0;
+//     kernel_parm->kernel_type = 0;
+//     kernel_parm->poly_degree = 3;
+//     kernel_parm->rbf_gamma = 1.0;
+//     kernel_parm->coef_lin = 1;
+//     kernel_parm->coef_const = 1;
+//     strcpy(kernel_parm->custom, "empty");
+//     // strcpy(type, "p");
+//
+//     m_do_model_selection = true;
+//     m_cv_k = 3;
+//
+//     for (i = start; (i < argc) && ((argv[i])[0] == '-'); i++) {
+//         switch ((argv[i])[1]) {
+//             case '?':
+//                 print_help();
+//                 exit(0);
+//             case 'z':
+//                 i++;
+//                 strcpy(type, argv[i]);
+//                 break;
+//             case 'v':
+//                 i++;
+//                 (*verbosity) = atol(argv[i]);
+//                 break;
+//             case 'b':
+//                 i++;
+//                 learn_parm->biased_hyperplane = atol(argv[i]);
+//                 break;
+//             case 'i':
+//                 i++;
+//                 learn_parm->remove_inconsistent = atol(argv[i]);
+//                 break;
+//             case 'f':
+//                 i++;
+//                 learn_parm->skip_final_opt_check = !atol(argv[i]);
+//                 break;
+//             case 'q':
+//                 i++;
+//                 learn_parm->svm_maxqpsize = atol(argv[i]);
+//                 break;
+//             case 'n':
+//                 i++;
+//                 learn_parm->svm_newvarsinqp = atol(argv[i]);
+//                 break;
+//             case '#':
+//                 i++;
+//                 learn_parm->maxiter = atol(argv[i]);
+//                 break;
+//             case 'h':
+//                 i++;
+//                 learn_parm->svm_iter_to_shrink = atol(argv[i]);
+//                 break;
+//             case 'm':
+//                 i++;
+//                 learn_parm->kernel_cache_size = atol(argv[i]);
+//                 break;
+//             case 'c':
+//                 i++;
+//                 learn_parm->svm_c = atof(argv[i]);
+//                 break;
+//             case 'w':
+//                 i++;
+//                 learn_parm->eps = atof(argv[i]);
+//                 break;
+//             case 'p':
+//                 i++;
+//                 learn_parm->transduction_posratio = atof(argv[i]);
+//                 break;
+//             case 'j':
+//                 i++;
+//                 learn_parm->svm_costratio = atof(argv[i]);
+//                 break;
+//             case 'e':
+//                 i++;
+//                 learn_parm->epsilon_crit = atof(argv[i]);
+//                 break;
+//             case 'o':
+//                 i++;
+//                 learn_parm->rho = atof(argv[i]);
+//                 break;
+//             case 'k':
+//                 i++;
+//                 learn_parm->xa_depth = atol(argv[i]);
+//                 break;
+//             case 'x':
+//                 i++;
+//                 learn_parm->compute_loo = atol(argv[i]);
+//                 break;
+//             case 't':
+//                 i++;
+//                 kernel_parm->kernel_type = atol(argv[i]);
+//                 break;
+//             case 'd':
+//                 i++;
+//                 kernel_parm->poly_degree = atol(argv[i]);
+//                 break;
+//             case 'g':
+//                 i++;
+//                 kernel_parm->rbf_gamma = atof(argv[i]);
+//                 break;
+//             case 's':
+//                 i++;
+//                 kernel_parm->coef_lin = atof(argv[i]);
+//                 break;
+//             case 'r':
+//                 i++;
+//                 kernel_parm->coef_const = atof(argv[i]);
+//                 break;
+//             case 'u':
+//                 i++;
+//                 strcpy(kernel_parm->custom, argv[i]);
+//                 break;
+//             case 'l':
+//                 i++;
+//                 strcpy(learn_parm->predfile, argv[i]);
+//                 break;
+//             case 'a':
+//                 i++;
+//                 strcpy(learn_parm->alphafile, argv[i]);
+//                 break;
+//             case 'M':
+//                 m_do_model_selection = true;
+//                 break;
+//             case 'V':
+//                 i++;
+//                 m_cv_k = atoi(argv[i]);
+//                 break;
+//             default:
+//                 printf("\nUnrecognized option %s!\n\n", argv[i]);
+//                 print_help();
+//                 exit(0);
+//         }
+//     }
+//
+//     if (m_do_model_selection && !m_cv_k) {
+//         printf("\nCannot perform model selection with 0 folds.\n");
+//         wait_any_key();
+//         print_help();
+//         exit(0);
+//     }
+//
+//     if (learn_parm->svm_iter_to_shrink == -9999) {
+//         if (kernel_parm->kernel_type == LINEAR)
+//             learn_parm->svm_iter_to_shrink = 2;
+//         else
+//             learn_parm->svm_iter_to_shrink = 100;
+//     }
+//     if (strcmp(type, "c") == 0) {
+//         learn_parm->type = CLASSIFICATION;
+//     } else if (strcmp(type, "r") == 0) {
+//         learn_parm->type = REGRESSION;
+//     } else if (strcmp(type, "p") == 0) {
+//         learn_parm->type = RANKING;
+//     } else if (strcmp(type, "o") == 0) {
+//         learn_parm->type = OPTIMIZATION;
+//     } else if (strcmp(type, "s") == 0) {
+//         learn_parm->type = OPTIMIZATION;
+//         learn_parm->sharedslack = 1;
+//     } else {
+//         printf("\nUnknown type '%s': Valid types are 'c' (classification), 'r' regession, and 'p' preference "
+//                "ranking.\n",
+//                type);
+//         wait_any_key();
+//         print_help();
+//         exit(0);
+//     }
+//     if ((learn_parm->skip_final_opt_check) && (kernel_parm->kernel_type == LINEAR)) {
+//         printf("\nIt does not make sense to skip the final optimality check for linear kernels.\n\n");
+//         learn_parm->skip_final_opt_check = 0;
+//     }
+//     if ((learn_parm->skip_final_opt_check) && (learn_parm->remove_inconsistent)) {
+//         printf("\nIt is necessary to do the final optimality check when removing inconsistent \nexamples.\n");
+//         wait_any_key();
+//         print_help();
+//         exit(0);
+//     }
+//     if ((learn_parm->svm_maxqpsize < 2)) {
+//         printf("\nMaximum size of QP-subproblems not in valid range: %ld [2..]\n", learn_parm->svm_maxqpsize);
+//         wait_any_key();
+//         print_help();
+//         exit(0);
+//     }
+//     if ((learn_parm->svm_maxqpsize < learn_parm->svm_newvarsinqp)) {
+//         printf("\nMaximum size of QP-subproblems [%ld] must be larger than the number of\n",
+//         learn_parm->svm_maxqpsize); printf("new variables [%ld] entering the working set in each iteration.\n",
+//         learn_parm->svm_newvarsinqp); wait_any_key(); print_help(); exit(0);
+//     }
+//     if (learn_parm->svm_iter_to_shrink < 1) {
+//         printf("\nMaximum number of iterations for shrinking not in valid range: %ld [1,..]\n",
+//                learn_parm->svm_iter_to_shrink);
+//         wait_any_key();
+//         print_help();
+//         exit(0);
+//     }
+//     if (learn_parm->svm_c < 0) {
+//         printf("\nThe C parameter must be greater than zero!\n\n");
+//         wait_any_key();
+//         print_help();
+//         exit(0);
+//     }
+//     if (learn_parm->transduction_posratio > 1) {
+//         printf("\nThe fraction of unlabeled examples to classify as positives must\n");
+//         printf("be less than 1.0 !!!\n\n");
+//         wait_any_key();
+//         print_help();
+//         exit(0);
+//     }
+//     if (learn_parm->svm_costratio <= 0) {
+//         printf("\nThe COSTRATIO parameter must be greater than zero!\n\n");
+//         wait_any_key();
+//         print_help();
+//         exit(0);
+//     }
+//     if (learn_parm->epsilon_crit <= 0) {
+//         printf("\nThe epsilon parameter must be greater than zero!\n\n");
+//         wait_any_key();
+//         print_help();
+//         exit(0);
+//     }
+//     if (learn_parm->rho < 0) {
+//         printf("\nThe parameter rho for xi/alpha-estimates and leave-one-out pruning must\n");
+//         printf("be greater than zero (typically 1.0 or 2.0, see T. Joachims, Estimating the\n");
+//         printf("Generalization Performance of an SVM Efficiently, ICML, 2000.)!\n\n");
+//         wait_any_key();
+//         print_help();
+//         exit(0);
+//     }
+//     if ((learn_parm->xa_depth < 0) || (learn_parm->xa_depth > 100)) {
+//         printf("\nThe parameter depth for ext. xi/alpha-estimates must be in [0..100] (zero\n");
+//         printf("for switching to the conventional xa/estimates described in T. Joachims,\n");
+//         printf("Estimating the Generalization Performance of an SVM Efficiently, ICML, 2000.)\n");
+//         wait_any_key();
+//         print_help();
+//         exit(0);
+//     }
+// }
 
 void svm::write_examples(std::ostream &out, DOC **examples, double *targets, long num_examples)
 {
