@@ -209,7 +209,7 @@ double machineDM::dm_evaluate(
     double noise = (sigma > 0) ? rand_normal(m_e) : 0.0;
 
     // FIXME: this should be the value function configured by the user.
-    double estim_v = noise + this->st.value(z_mod, tau_mod);
+    double estim_v = noise + this->pref.value(z_mod, tau_mod);
     return estim_v;
 }
 double machineDM::Rand_normal(double mean, double sd)

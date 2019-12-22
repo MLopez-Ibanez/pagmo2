@@ -206,9 +206,9 @@ public:
      * [1,100[ or \p eta_m is not in [1,100[.
      */
 
-    machineDM(problem &prob, value_function &pref, stewart_value_function &st, unsigned mode, double gamma,
-              double sigma, double delta, int q, unsigned seed = pagmo::random_device::next())
-        : prob(prob), pref(pref), st(st), mode(mode), gamma(gamma), sigma(sigma), delta(delta), q(q),
+    machineDM(problem &prob, value_function &pref, unsigned mode, double gamma, double sigma, double delta, int q,
+              unsigned seed = pagmo::random_device::next())
+        : prob(prob), pref(pref), mode(mode), gamma(gamma), sigma(sigma), delta(delta), q(q),
           rand_normal(0., sigma * sigma) // to generate a normally distributed number
     {
         m_e.seed(seed);
@@ -256,7 +256,6 @@ public:
     int q;
     problem &prob;
     value_function &pref;
-    stewart_value_function &st;
     unsigned mode;
     mutable detail::random_engine_type m_e;
     unsigned m_seed;
