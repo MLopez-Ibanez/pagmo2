@@ -19,6 +19,7 @@
 
 # include <pagmo/utils/svm_common.h>
 # include <pagmo/utils/svm_learn.h>
+# include <assert.h>
 
 #define MAX(x,y)      ((x) < (y) ? (y) : (x))
 #define MIN(x,y)      ((x) > (y) ? (y) : (x))
@@ -739,14 +740,17 @@ void svm_learn_ranking(DOC **docs, double *rankvalue, long int totdoc,
 
   totpair=0;
   for(i=0;i<totdoc;i++) {
-    for(j=i+1;j<totdoc;j++) {
-      if((docs[i]->queryid==docs[j]->queryid) && (rankvalue[i] != rankvalue[j])) {
-	totpair++;
+      for(j=i+1;j<totdoc;j++) {
+          if((docs[i]->queryid==docs[j]->queryid) && (rankvalue[i] != rankvalue[j])) {
+              totpair++;
+          }
       }
-    }
   }
-
-  printf("Constructing %ld rank constraints...",totpair); fflush(stdout);
+  
+  fprintf(stderr, "Constructing %ld rank constraints...",totpair);
+  // MANUEL: FIXME: How this can happen?
+  assert(totpair > 0);
+  
   docdiff=(DOC **)my_malloc(sizeof(DOC)*totpair);
   target=(double *)my_malloc(sizeof(double)*totpair); 
   greater=(long *)my_malloc(sizeof(long)*totpair); 
