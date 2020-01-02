@@ -4168,8 +4168,12 @@ void write_prediction(char *predfile, MODEL *model, double *lin,
   if(verbosity>=1) {
     printf("Writing prediction file..."); fflush(stdout);
   }
-  if ((predfl = fopen (predfile, "w")) == NULL)
-  { perror (predfile); exit (1); }
+  if (predfile[0]) {
+      if ((predfl = fopen (predfile, "w")) == NULL)
+      { perror (predfile); exit (1); }
+  } else {
+      predfl = stderr;
+  }
   a_max=learn_parm->epsilon_a;
   for(i=0;i<totdoc;i++) {
     if((unlabeled[i]) && (a[i]>a_max)) {
@@ -4192,7 +4196,7 @@ void write_prediction(char *predfile, MODEL *model, double *lin,
       }
     }
   }
-  fclose(predfl);
+  if (predfile[0]) fclose(predfl);
   if(verbosity>=1) {
     printf("done\n");
   }
